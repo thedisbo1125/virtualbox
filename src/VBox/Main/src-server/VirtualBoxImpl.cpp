@@ -77,6 +77,7 @@
 #include "HostImpl.h"
 #include "USBControllerImpl.h"
 #include "SystemPropertiesImpl.h"
+#include "CertificateImpl.h"
 #include "GuestOSTypeImpl.h"
 #include "NetworkServiceRunner.h"
 #include "DHCPServerImpl.h"
@@ -389,6 +390,7 @@ struct VirtualBox::Data
     const RTTHREAD                      threadAsyncEvent;
     EventQueue * const                  pAsyncEventQ;
     const ComObjPtr<EventSource>        pEventSource;
+    ComObjPtr<Certificate>              ptrCertificateInfo;
 
 #ifdef VBOX_WITH_EXTPACK
     /** The extension pack manager object lives here. */
@@ -1091,6 +1093,12 @@ void VirtualBox::uninit()
         unconst(m->pSystemProperties).setNull();
     }
 
+    if (m->ptrCertificateInfo)
+    {
+        m->ptrCertificateInfo->uninit();
+        unconst(m->ptrCertificateInfo).setNull();
+    }
+
     if (m->pHost)
     {
         m->pHost->uninit();
@@ -1278,6 +1286,41 @@ HRESULT VirtualBox::getSystemProperties(ComPtr<ISystemProperties> &aSystemProper
     /* mSystemProperties is const, no need to lock */
     m->pSystemProperties.queryInterfaceTo(aSystemProperties.asOutParam());
     return S_OK;
+}
+
+HRESULT VirtualBox::getCertificateInfo(const com::Utf8Str &aCertificateFilename,
+                                       ComPtr<ICertificate> &aCertificateInfo)
+{
+    RTERRINFOSTATIC ErrInfo;
+    RTCRX509CERTIFICATE x509certificate;
+    HRESULT hrc;
+
+    if (RTFileExists(aCertificateFilename.c_str()))
+    {
+        int vrc = RTCrX509Certificate_ReadFromFile(&x509certificate, aCertificateFilename.c_str(),
+                                                   RTCRX509CERT_READ_F_PEM_ONLY, &g_RTAsn1DefaultAllocator,
+                                                   RTErrInfoInitStatic(&ErrInfo));
+        if (RT_FAILURE(vrc))
+        {
+            RTCrX509Certificate_Delete(&x509certificate);
+            return setError(VBOX_E_FILE_ERROR, tr("Failed to read certificate '%s': %Rrc%#RTeim\n"),
+                            aCertificateFilename.c_str(), vrc, &ErrInfo.Core);
+        }
+
+        m->ptrCertificateInfo.createObject();
+        hrc = m->ptrCertificateInfo->initCertificate(&x509certificate, false, false);
+        if (SUCCEEDED(hrc))
+        {
+            /* set the return value */
+            m->ptrCertificateInfo.queryInterfaceTo(aCertificateInfo.asOutParam());
+        }
+    }
+    else
+    {
+        hrc = VERR_FILE_NOT_FOUND;
+    }
+
+    return hrc;
 }
 
 HRESULT VirtualBox::getMachines(std::vector<ComPtr<IMachine> > &aMachines)

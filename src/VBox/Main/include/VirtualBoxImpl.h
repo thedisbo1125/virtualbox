@@ -56,6 +56,7 @@ class GuestOSType;
 class Progress;
 class Host;
 class SystemProperties;
+class Certificate;
 class DHCPServer;
 class PerformanceCollector;
 class CloudProviderManager;
@@ -357,6 +358,8 @@ private:
     HRESULT getCloudProviderManager(ComPtr<ICloudProviderManager> &aCloudProviderManager);
 
    // wrapped IVirtualBox methods
+    HRESULT getCertificateInfo(const com::Utf8Str &aCertificateFilename,
+                               ComPtr<ICertificate> &aCertificateInfo);
     HRESULT composeMachineFilename(const com::Utf8Str &aName,
                                    const com::Utf8Str &aGroup,
                                    const com::Utf8Str &aCreateFlags,

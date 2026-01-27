@@ -3035,6 +3035,26 @@
       </desc>
     </attribute>
 
+    <method name="getCertificateInfo">
+      <desc>
+        Returns an ICertificate structure for the requested certificate.
+        <result name="VERR_FILE_NOT_FOUND">
+          Certificate file was not found.
+        </result>
+        <result name="VBOX_E_FILE_ERROR">
+          Error reading certificate file.
+        </result>
+      </desc>
+      <param name="CertificateFilename" type="wstring" dir="in">
+        <desc>
+          Name and path of the certificate file.
+        </desc>
+      </param>
+      <param name="CertificateInfo" type="ICertificate" dir="return">
+        <desc></desc>
+      </param>
+    </method>
+
     <method name="composeMachineFilename">
       <rest request="get" path="/server/method/"/>
       <desc>
