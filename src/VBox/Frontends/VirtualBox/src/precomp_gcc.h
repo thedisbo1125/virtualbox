@@ -1,4 +1,4 @@
-/* $Id: precomp_gcc.h 112760 2026-01-29 17:01:07Z sergey.dubov@oracle.com $*/
+/* $Id: precomp_gcc.h 112875 2026-02-09 09:22:16Z knut.osmundsen@oracle.com $*/
 /** @file
  * VBox Qt GUI - Precompiled header for Visual C++.
  */
@@ -108,7 +108,6 @@
 #include <QtGui/qpixelformat.h> /* 526 */
 #include <QtGui/qpainterpath.h> /* 526 */
 #include <QtGui/qpaintdevice.h> /* 526 */
-#include <QtGui/qmatrix.h> /* 526 */
 #include <QtCore/qline.h> /* 526 */
 #include <QtCore/qdatastream.h> /* 526 */
 #include <QtWidgets/qtwidgetsglobal.h> /* 520 */
