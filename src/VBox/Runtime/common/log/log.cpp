@@ -1,4 +1,4 @@
-/* $Id: log.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: log.cpp 112906 2026-02-09 14:46:56Z knut.osmundsen@oracle.com $ */
 /** @file
  * Runtime VBox - Logger.
  */
@@ -1563,9 +1563,9 @@ RTDECL(int) RTLogCreateExV(PRTLOGGER *ppLogger, const char *pszEnvVarBase, uint6
                     if (Thread != NIL_RTTHREAD)
                     {
                         int32_t c = RTLockValidatorWriteLockGetCount(Thread);
-                        RTSemSpinMutexRequest(pLoggerInt->hSpinMtx);
+                        rtlogLock(pLoggerInt);
                         c = RTLockValidatorWriteLockGetCount(Thread) - c;
-                        RTSemSpinMutexRelease(pLoggerInt->hSpinMtx);
+                        rtlogUnlock(pLoggerInt);
                         ASMAtomicWriteU32(&g_cLoggerLockCount, c);
                     }
 
