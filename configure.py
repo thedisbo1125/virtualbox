@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112899 2026-02-09 12:53:55Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112907 2026-02-09 15:13:22Z andreas.loeffler@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112899 $"
+__revision__ = "$Revision: 112907 $"
 
 import argparse
 import ctypes
@@ -1658,7 +1658,7 @@ class LibraryCheck(CheckBase):
 
         return True;
 
-    def checkCallback_qt6(self):
+    def checkCallback_qt(self):
         """
         Tweaks needed for using Qt 6.x.
         """
@@ -3323,7 +3323,7 @@ g_aoLibs = [
     #       be resolved in the check callback.
     LibraryCheck("qt", [ "QtCore/QtGlobal" ], [ ], aeTargets = [ BuildTarget.ANY ],
                  sCode = '#define IN_RING3\n#include <QtCore/QtGlobal>\nint main() { std::cout << QT_VERSION_STR << std::endl;\n#if QT_VERSION >= 6 * 65536 + 8 * 256\nreturn 0;\n#else\nreturn 1;\n#endif\n}',
-                 fnCallback = LibraryCheck.checkCallback_qt6,
+                 fnCallback = LibraryCheck.checkCallback_qt,
                  sSdkName = 'QT6', dictDefinesToSetIfFailed = { 'VBOX_WITH_QTGUI' : '' }),
     LibraryCheck("libsdl2", [ "SDL2/SDL.h" ], [ "libSDL2" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <SDL2/SDL.h>\nint main() { printf("%d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL); return 0; }\n',
@@ -3684,7 +3684,7 @@ def main():
     oParser.add_argument('--enable-webservice', help=argparse.SUPPRESS, action='store_true', default=None, dest='VBOX_WITH_WEBSERVICES=1');
     oParser.add_argument('--passive-mesa', help=argparse.SUPPRESS, action='store_true', default=None, dest='DISPLAY=');
     oParser.add_argument('--with-ddk', help=argparse.SUPPRESS, dest='config_tools_path_win_ddk');
-    oParser.add_argument('--with-qt', '--with-qt-dir', help=argparse.SUPPRESS, dest='config_libs_path_qt6');
+    oParser.add_argument('--with-qt', '--with-qt-dir', help=argparse.SUPPRESS, dest='config_libs_path_qt');
     oParser.add_argument('--with-sdk10', help=argparse.SUPPRESS, dest='config_tools_path_win_sdk10');
     oParser.add_argument('--with-libsdl', help=argparse.SUPPRESS, dest='config_libs_path_sdl');
     oParser.add_argument('--with-vc', help=argparse.SUPPRESS, dest='config_tools_path_win_visualcpp');
