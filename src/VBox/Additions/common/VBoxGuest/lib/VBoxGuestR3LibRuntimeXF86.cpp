@@ -1,4 +1,4 @@
-/* $Id: VBoxGuestR3LibRuntimeXF86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxGuestR3LibRuntimeXF86.cpp 112873 2026-02-09 09:19:32Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxGuestR3Lib - Ring-3 Support Library for VirtualBox guest additions,
  *                  implements the minimum of runtime functions needed for
@@ -46,9 +46,7 @@
 #if defined(VBOX_VBGLR3_XFREE86)
 extern "C" {
 # define XFree86LOADER
-# if RT_GNUC_PREREQ(13,0) /* cmath gets dragged in and the c++/13/cmath header is allergic to -ffreestanding.  */
-#  define _GLIBCXX_INCLUDE_NEXT_C_HEADERS
-# endif
+# define _GLIBCXX_INCLUDE_NEXT_C_HEADERS /* We're in extern "C" mode, so don't let libstdc++'s c++/<version>/math.h load cmath. */
 # include <xf86_ansic.h>
 # undef size_t
 }
