@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: tdGuestOsUnattendedInst1.py 112931 2026-02-11 09:22:53Z serkan.bayraktar@oracle.com $
+# $Id: tdGuestOsUnattendedInst1.py 112939 2026-02-11 11:31:05Z alexander.rudnev@oracle.com $
 
 """
 VirtualBox Validation Kit - Guest OS unattended installation tests.
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 112931 $"
+__version__ = "$Revision: 112939 $"
 
 
 # Standard Python imports.
@@ -617,7 +617,7 @@ class tdGuestOsInstTest1(vbox.TestDriver):
         # Ubuntu
         #
         # With VirtualBox versions >= 7.2 Unattended detects a more specific OS type ID
-        if (vbox.TestDriver().fpApiVer >= 7.2):
+        if vbox.TestDriver().fpApiVer >= 7.2:
             oSet.aoTestVms.extend([
                 ## @todo 15.10 fails with grub install error.
                 #UnattendedVm(oSet, 'tst-ubuntu-15.10-64', 'Ubuntu_64', '6.0/uaisos/ubuntu-15.10-desktop-amd64.iso'),
