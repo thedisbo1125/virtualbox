@@ -1,4 +1,4 @@
-/* $Id: UIMessageCenter.cpp 112975 2026-02-12 15:04:16Z sergey.dubov@oracle.com $ */
+/* $Id: UIMessageCenter.cpp 112976 2026-02-12 16:43:36Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMessageCenter class implementation.
  */
@@ -1786,22 +1786,6 @@ void UIMessageCenter::cannotSwitchScreenInSeamless(quint64 uMinVRAM) const
              "least <b>%1</b> of video memory.</p>")
              .arg(UITranslator::formatSize(uMinVRAM)));
 }
-
-#ifdef VBOX_WITH_DRAG_AND_DROP
-void UIMessageCenter::cannotDropDataToHost(const CDnDSource &dndSource, QWidget *pParent /* = 0 */) const
-{
-    error(pParent, MessageType_Error,
-          tr("Drag and drop operation from guest to host failed."),
-          UIErrorString::formatErrorInfo(dndSource));
-}
-
-void UIMessageCenter::cannotDropDataToHost(const CProgress &progress, QWidget *pParent /* = 0 */) const
-{
-    error(pParent, MessageType_Error,
-          tr("Drag and drop operation from guest to host failed."),
-          UIErrorString::formatErrorInfo(progress));
-}
-#endif /* VBOX_WITH_DRAG_AND_DROP */
 
 bool UIMessageCenter::confirmHardDisklessMachine(QWidget *pParent /* = 0*/) const
 {

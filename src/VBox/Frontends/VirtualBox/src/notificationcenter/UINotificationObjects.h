@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.h 112975 2026-02-12 15:04:16Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.h 112976 2026-02-12 16:43:36Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects declarations.
  */
@@ -86,6 +86,7 @@ class CVRDEServer;
 class CVRDEServerInfo;
 class CUnattended;
 #ifdef VBOX_WITH_DRAG_AND_DROP
+class CDnDSource;
 class CDnDTarget;
 #endif
 
@@ -793,6 +794,13 @@ public:
         /** Notifies about inability to drop data to guest.
           * @param  comProgress  Brings the drop-progress being executed. */
         static void cannotDropDataToGuest(const CProgress &comProgress);
+
+        /** Notifies about inability to drop data to host.
+          * @param  comDnDSource  Brings the data being dropped. */
+        static void cannotDropDataToHost(const CDnDSource &comDnDSource);
+        /** Notifies about inability to drop data to host.
+          * @param  comProgress  Brings the drop-progress being executed. */
+        static void cannotDropDataToHost(const CProgress &comProgress);
 #endif /* VBOX_WITH_DRAG_AND_DROP */
     /** @} */
 

@@ -1,4 +1,4 @@
-/* $Id: UIMessageCenter.h 112975 2026-02-12 15:04:16Z sergey.dubov@oracle.com $ */
+/* $Id: UIMessageCenter.h 112976 2026-02-12 16:43:36Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMessageCenter class declaration.
  */
@@ -407,12 +407,6 @@ public:
         void cannotEnterSeamlessMode(ULONG uWidth, ULONG uHeight, ULONG uBpp, ULONG64 uMinVRAM) const;
         bool cannotSwitchScreenInFullscreen(quint64 uMinVRAM) const;
         void cannotSwitchScreenInSeamless(quint64 uMinVRAM) const;
-
-#ifdef VBOX_WITH_DRAG_AND_DROP
-        /// @todo move to notification-center as progress notification .. one day :)
-        void cannotDropDataToHost(const CDnDSource &dndSource, QWidget *pParent = 0) const;
-        void cannotDropDataToHost(const CProgress &progress, QWidget *pParent = 0) const;
-#endif /* VBOX_WITH_DRAG_AND_DROP */
     /** @} */
 
     /** @name VirtualBox Manager / Wizard warnings.

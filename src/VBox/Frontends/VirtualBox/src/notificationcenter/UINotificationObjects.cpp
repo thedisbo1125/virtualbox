@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.cpp 112975 2026-02-12 15:04:16Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.cpp 112976 2026-02-12 16:43:36Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects implementations.
  */
@@ -86,6 +86,7 @@
 #include "CVRDEServer.h"
 #include "CVRDEServerInfo.h"
 #ifdef VBOX_WITH_DRAG_AND_DROP
+# include "CDnDSource.h"
 # include "CDnDTarget.h"
 #endif
 
@@ -2047,6 +2048,7 @@ void UINotificationMessage::cannotDropDataToGuest(const CDnDTarget &comDndTarget
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't drop data to guest ..."),
+        QApplication::translate("UIMessageCenter", "Drag and drop operation from host to guest failed.") +
         UIErrorString::formatErrorInfo(comDndTarget));
 }
 
@@ -2055,6 +2057,25 @@ void UINotificationMessage::cannotDropDataToGuest(const CProgress &comProgress)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't drop data to guest ..."),
+        QApplication::translate("UIMessageCenter", "Drag and drop operation from host to guest failed.") +
+        UIErrorString::formatErrorInfo(comProgress));
+}
+
+/* static */
+void UINotificationMessage::cannotDropDataToHost(const CDnDSource &comDnDSource)
+{
+    createMessage(
+        QApplication::translate("UIMessageCenter", "Can't drop data to host ..."),
+        QApplication::translate("UIMessageCenter", "Drag and drop operation from guest to host failed.") +
+        UIErrorString::formatErrorInfo(comDnDSource));
+}
+
+/* static */
+void UINotificationMessage::cannotDropDataToHost(const CProgress &comProgress)
+{
+    createMessage(
+        QApplication::translate("UIMessageCenter", "Can't drop data to host ..."),
+        QApplication::translate("UIMessageCenter", "Drag and drop operation from guest to host failed.") +
         UIErrorString::formatErrorInfo(comProgress));
 }
 #endif /* VBOX_WITH_DRAG_AND_DROP */
