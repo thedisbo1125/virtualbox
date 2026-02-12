@@ -1,4 +1,4 @@
-/* $Id: PDMR3DevHlp.cpp 112981 2026-02-12 20:05:56Z alexander.eichner@oracle.com $ */
+/* $Id: PDMR3DevHlp.cpp 112983 2026-02-12 20:21:07Z alexander.eichner@oracle.com $ */
 /** @file
  * PDM - Pluggable Device and Driver Manager, Device Helpers.
  */
@@ -305,7 +305,7 @@ static DECLCALLBACK(int) pdmR3DevHlp_Mmio2Create(PPDMDEVINS pDevIns, PPDMPCIDEV 
 }
 
 
-/** @interface_method_impl{PDMDEVHLPR3,pfnMmio2CreateFroMExisting} */
+/** @interface_method_impl{PDMDEVHLPR3,pfnMmio2CreateFromExisting} */
 static DECLCALLBACK(int) pdmR3DevHlp_Mmio2CreateFromExisting(PPDMDEVINS pDevIns, PPDMPCIDEV pPciDev, uint32_t iPciRegion, RTGCPHYS cbRegion,
                                                              uint32_t fFlags, const char *pszDesc, void *pvBacking, PPGMMMIO2HANDLE phRegion)
 {
