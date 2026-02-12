@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.h 112969 2026-02-12 13:01:11Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.h 112974 2026-02-12 15:00:24Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects declarations.
  */
@@ -816,6 +816,18 @@ private:
                                  const QString &strDetails,
                                  const QString &strInternalName,
                                  const QString &strHelpKeyword);
+    /** Creates blocking message.
+      * @param  pParent          Brings the local notification-center reference.
+      * @param  strName          Brings the message name.
+      * @param  strDetails       Brings the message details.
+      * @param  strInternalName  Brings the message internal name.
+      * @param  strHelpKeyword   Brings the message help keyword. */
+    static void createBlockingMessageInt(UINotificationCenter *pParent,
+                                         const QString &strName,
+                                         const QString &strDetails,
+                                         const QString &strInternalName,
+                                         const QString &strHelpKeyword);
+
     /** Creates message.
       * @param  strName     Brings the message name.
       * @param  strDetails  Brings the message details.
@@ -834,6 +846,25 @@ private:
                               const QString &strInternalName,
                               const QString &strHelpKeyword = QString(),
                               QWidget *pParent = 0);
+    /** Creates blocking message.
+      * @param  strName     Brings the message name.
+      * @param  strDetails  Brings the message details.
+      * @param  pParent     Brings the parent reference. */
+    static void createBlockingMessage(const QString &strName,
+                                      const QString &strDetails,
+                                      QWidget *pParent = 0);
+    /** Creates blocking message.
+      * @param  strName          Brings the message name.
+      * @param  strDetails       Brings the message details.
+      * @param  strInternalName  Brings the message internal name.
+      * @param  strHelpKeyword   Brings the message help keyword.
+      * @param  pParent          Brings the local notification-center reference. */
+    static void createBlockingMessage(const QString &strName,
+                                      const QString &strDetails,
+                                      const QString &strInternalName,
+                                      const QString &strHelpKeyword = QString(),
+                                      QWidget *pParent = 0);
+
     /** Destroys message.
       * @param  strInternalName  Brings the message internal name.
       * @param  pParent          Brings the local notification-center reference. */

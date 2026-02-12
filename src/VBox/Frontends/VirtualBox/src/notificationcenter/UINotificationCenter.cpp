@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.cpp 112900 2026-02-09 14:30:17Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.cpp 112974 2026-02-12 15:00:24Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class implementation.
  */
@@ -264,6 +264,41 @@ void UINotificationCenter::revoke(const QUuid &uId)
 {
     AssertReturnVoid(!uId.isNull());
     return m_pModel->revokeObject(uId);
+}
+
+void UINotificationCenter::showBlocking(UINotificationMessage *pMessage)
+{
+    /* Check for the recursive run: */
+    AssertMsgReturnVoid(!m_pEventLoop, ("UINotificationCenter::showBlocking() is called recursively!\n"));
+
+    /* Guard message for the case
+     * it destroyed itself in his append call: */
+    QPointer<UINotificationMessage> guardMessage = pMessage;
+    connect(pMessage, &UINotificationMessage::sigAboutToClose,
+            this, &UINotificationCenter::sltHandleMessageClosed);
+    append(pMessage);
+
+    /* Is progress still valid? */
+    if (guardMessage.isNull())
+        return;
+
+    /* Create a local event-loop: */
+    QEventLoop eventLoop;
+    m_pEventLoop = &eventLoop;
+
+    /* Guard ourself for the case
+     * we destroyed ourself in our event-loop: */
+    QPointer<UINotificationCenter> guardThis = this;
+
+    /* Start the blocking event-loop: */
+    eventLoop.exec();
+
+    /* Are we still valid? */
+    if (guardThis.isNull())
+        return;
+
+    /* Cleanup event-loop: */
+    m_pEventLoop = 0;
 }
 
 bool UINotificationCenter::handleNow(UINotificationProgress *pProgress)
@@ -534,6 +569,13 @@ void UINotificationCenter::sltHandleModelItemRemoved(const QUuid &uId)
     setHidden(m_pModel->ids().isEmpty());
     if (m_pModel->ids().isEmpty() && m_pButtonOpen->isChecked())
         m_pButtonOpen->toggle();
+}
+
+void UINotificationCenter::sltHandleMessageClosed()
+{
+    /* Break the loop if exists: */
+    if (m_pEventLoop)
+        m_pEventLoop->exit();
 }
 
 void UINotificationCenter::sltHandleProgressFinished()

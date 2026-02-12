@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.cpp 112969 2026-02-12 13:01:11Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.cpp 112974 2026-02-12 15:00:24Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects implementations.
  */
@@ -2088,6 +2088,30 @@ void UINotificationMessage::createMessageInt(UINotificationCenter *pParent,
 }
 
 /* static */
+void UINotificationMessage::createBlockingMessageInt(UINotificationCenter *pParent,
+                                                     const QString &strName,
+                                                     const QString &strDetails,
+                                                     const QString &strInternalName,
+                                                     const QString &strHelpKeyword)
+{
+    /* Make sure parent is set: */
+    AssertPtr(pParent);
+    UINotificationCenter *pEffectiveParent = pParent ? pParent : gpNotificationCenter;
+
+    /* Check if message suppressed: */
+    if (isSuppressed(strInternalName))
+        return;
+
+    /* Create message finally: */
+    QPointer<UINotificationMessage> pMessage = new UINotificationMessage(strName,
+                                                                         strDetails,
+                                                                         strInternalName,
+                                                                         strHelpKeyword);
+    pEffectiveParent->showBlocking(pMessage);
+    delete pMessage;
+}
+
+/* static */
 void UINotificationMessage::createMessage(const QString &strName,
                                           const QString &strDetails,
                                           QWidget *pParent /* = 0 */)
@@ -2113,6 +2137,34 @@ void UINotificationMessage::createMessage(const QString &strName,
 
     /* Redirect to wrapper above: */
     return createMessageInt(pCenter, strName, strDetails, strInternalName, strHelpKeyword);
+}
+
+/* static */
+void UINotificationMessage::createBlockingMessage(const QString &strName,
+                                                  const QString &strDetails,
+                                                  QWidget *pParent /* = 0 */)
+{
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturnVoid(pCenter);
+
+    /* Redirect to wrapper above: */
+    return createBlockingMessageInt(pCenter, strName, strDetails, QString(), QString());
+}
+
+/* static */
+void UINotificationMessage::createBlockingMessage(const QString &strName,
+                                                  const QString &strDetails,
+                                                  const QString &strInternalName,
+                                                  const QString &strHelpKeyword /* = QString() */,
+                                                  QWidget *pParent /* = 0 */)
+{
+    /* Acquire notification-center, make sure it's present: */
+    UINotificationCenter *pCenter = UINotificationCenter::acquire(pParent);
+    AssertPtrReturnVoid(pCenter);
+
+    /* Redirect to wrapper above: */
+    return createBlockingMessageInt(pCenter, strName, strDetails, strInternalName, strHelpKeyword);
 }
 
 /* static */
