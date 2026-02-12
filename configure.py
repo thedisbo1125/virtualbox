@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112962 2026-02-11 16:49:36Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112970 2026-02-12 13:23:11Z andreas.loeffler@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112962 $"
+__revision__ = "$Revision: 112970 $"
 
 import argparse
 import ctypes
@@ -2155,6 +2155,7 @@ class ToolCheck(CheckBase):
         else:
             asPath = [ '/Library/Developer/CommandLineTools/SDKs' ];
             oPattern = re.compile(r'MacOSX(\d+)\.(\d+)\.sdk');
+            tupleVer = None;
             for sCurPath in asPath:
                 if not sCurPath:
                     continue;
@@ -2163,13 +2164,22 @@ class ToolCheck(CheckBase):
                     for sCurDir in os.listdir(sCurPath):
                         if oPattern.match(sCurDir):
                             tupleCur = tuple(map(int, oPattern.match(sCurDir).groups()));
-                            if tupleCur >= (14, 4): ## @todo Is this sufficient?
+                            if tupleCur:
+                                # Set as a baseline for the host; for macOS guests we at least need 10.4.4 (on Intel/x86).
+                                # Choose the oldest SDK we find to provide maximum compatibility.
+                                if not tupleVer:
+                                    tupleVer = tupleCur;
+                                elif tupleVer > tupleCur:
+                                    tupleVer = tupleCur;
                                 sPath = os.path.join(sCurPath, sCurDir);
-                                break;
-                            else:
-                                self.printVerbose(1, f"SDK {'.'.join(str(x) for x in tupleCur)} too old, skipping");
                 except FileNotFoundError as ex:
                     self.printError(f'{ex}');
+
+            if tupleVer:
+                if tupleVer < (10, 4):
+                    self.printWarn(1, f"Found SDK {'.'.join(str(x) for x in tupleVer)} which might be too old for the macOS Guest Additions (< 10.4.4)");
+                if tupleVer < (11, 0):
+                    self.printWarn(1, f"Found SDK {'.'.join(str(x) for x in tupleVer)} which might be too old (< 11.0)");
 
         if  sPath \
         and isDir(sPath):
@@ -2182,6 +2192,7 @@ class ToolCheck(CheckBase):
                 self.sVer = plistData.get('Version');
             if self.sVer:
                 g_oEnv.set('VBOX_PATH_MACOSX_SDK', self.sCmdPath);
+                self.print(f"Using SDK {self.sVer} at '{self.sCmdPath}'");
                 return True;
 
         self.printError('MacOS SDK not found or invalid directory specified');
