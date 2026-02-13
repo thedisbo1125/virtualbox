@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjectItem.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UINotificationObjectItem.cpp 113010 2026-02-13 14:49:33Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationObjectItem class implementation.
  */
@@ -51,9 +51,12 @@
 *   Class UINotificationObjectItem implementation.                                                                               *
 *********************************************************************************************************************************/
 
-UINotificationObjectItem::UINotificationObjectItem(QWidget *pParent, UINotificationObject *pObject /* = 0 */)
+UINotificationObjectItem::UINotificationObjectItem(QWidget *pParent,
+                                                   UINotificationObject *pObject,
+                                                   int iWidthHint)
     : QWidget(pParent)
     , m_pObject(pObject)
+    , m_iWidthHint(iWidthHint)
     , m_pLayoutMain(0)
     , m_pLayoutUpper(0)
     , m_pLabelName(0)
@@ -118,6 +121,17 @@ UINotificationObjectItem::UINotificationObjectItem(QWidget *pParent, UINotificat
         m_pLabelDetails = new QIRichTextLabel(this);
         if (m_pLabelDetails)
         {
+            /* Calculate width hint (if it was passed): */
+            int iWidthHint = -1;
+            if (m_iWidthHint > 0)
+            {
+                /* Acquire layout margins: */
+                int iL, iT, iR, iB;
+                m_pLayoutMain->getContentsMargins(&iL, &iT, &iR, &iB);
+                /* Calculate width hint: */
+                iWidthHint = m_iWidthHint - iL - iR;
+            }
+
             QFont myFont = m_pLabelDetails->font();
             myFont.setPointSize(myFont.pointSize() - 1);
             m_pLabelDetails->setBrowserFont(myFont);
@@ -129,6 +143,7 @@ UINotificationObjectItem::UINotificationObjectItem(QWidget *pParent, UINotificat
                 iHint += m_pLayoutUpper->spacing() + m_pButtonForget->minimumSizeHint().width();
             if (m_pButtonClose)
                 iHint += m_pLayoutUpper->spacing() + m_pButtonClose->minimumSizeHint().width();
+            iHint = qMax(iHint, iWidthHint);
             m_pLabelDetails->setMinimumTextWidth(iHint);
             m_pLabelDetails->setText(m_pObject->details());
 
@@ -266,8 +281,10 @@ void UINotificationObjectItem::sltHandleHelpRequest()
 *   Class UINotificationProgressItem implementation.                                                                             *
 *********************************************************************************************************************************/
 
-UINotificationProgressItem::UINotificationProgressItem(QWidget *pParent, UINotificationProgress *pProgress /* = 0 */)
-    : UINotificationObjectItem(pParent, pProgress)
+UINotificationProgressItem::UINotificationProgressItem(QWidget *pParent,
+                                                       UINotificationProgress *pProgress,
+                                                       int iWidthHint)
+    : UINotificationObjectItem(pParent, pProgress, iWidthHint)
     , m_pProgressBar(0)
 {
     /* Main layout was prepared in base-class: */
@@ -369,8 +386,10 @@ void UINotificationProgressItem::updateDetails()
 *   Class UINotificationDownloaderItem implementation.                                                                           *
 *********************************************************************************************************************************/
 
-UINotificationDownloaderItem::UINotificationDownloaderItem(QWidget *pParent, UINotificationDownloader *pDownloader /* = 0 */)
-    : UINotificationObjectItem(pParent, pDownloader)
+UINotificationDownloaderItem::UINotificationDownloaderItem(QWidget *pParent,
+                                                           UINotificationDownloader *pDownloader,
+                                                           int iWidthHint)
+    : UINotificationObjectItem(pParent, pDownloader, iWidthHint)
     , m_pProgressBar(0)
 {
     /* Main layout was prepared in base-class: */
@@ -469,15 +488,17 @@ void UINotificationDownloaderItem::updateDetails()
 *   Namespace UINotificationProgressItem implementation.                                                                         *
 *********************************************************************************************************************************/
 
-UINotificationObjectItem *UINotificationItem::create(QWidget *pParent, UINotificationObject *pObject)
+UINotificationObjectItem *UINotificationItem::create(QWidget *pParent,
+                                                     UINotificationObject *pObject,
+                                                     int iWidthHint)
 {
     /* Handle known types: */
     if (pObject->inherits("UINotificationProgress"))
-        return new UINotificationProgressItem(pParent, static_cast<UINotificationProgress*>(pObject));
+        return new UINotificationProgressItem(pParent, static_cast<UINotificationProgress*>(pObject), iWidthHint);
 #ifdef VBOX_GUI_WITH_NETWORK_MANAGER
     else if (pObject->inherits("UINotificationDownloader"))
-        return new UINotificationDownloaderItem(pParent, static_cast<UINotificationDownloader*>(pObject));
+        return new UINotificationDownloaderItem(pParent, static_cast<UINotificationDownloader*>(pObject), iWidthHint);
 #endif
     /* Handle defaults: */
-    return new UINotificationObjectItem(pParent, pObject);
+    return new UINotificationObjectItem(pParent, pObject, iWidthHint);
 }

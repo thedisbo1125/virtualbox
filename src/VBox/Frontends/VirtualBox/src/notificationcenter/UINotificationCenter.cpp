@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.cpp 113009 2026-02-13 14:36:46Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.cpp 113010 2026-02-13 14:49:33Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class implementation.
  */
@@ -973,8 +973,20 @@ void UINotificationCenter::adjustMask()
 
 void UINotificationCenter::createItem(const QUuid &uId)
 {
+    /* For extended mode, we should determine
+     * parent width hint (if parent present): */
+    int iWidthHint = -1;
+    if (parentWidget() && m_fExtendedMode)
+    {
+        /* Acquire layout margins: */
+        int iL, iT, iR, iB;
+        m_pLayoutMain->getContentsMargins(&iL, &iT, &iR, &iB);
+        /* Calculate width hint: */
+        iWidthHint = parentWidget()->width() - iL - iR;
+    }
+
     /* Create item itself: */
-    UINotificationObjectItem *pItem = UINotificationItem::create(this, m_pModel->objectById(uId));
+    UINotificationObjectItem *pItem = UINotificationItem::create(this, m_pModel->objectById(uId), iWidthHint);
     m_items[uId] = pItem;
     m_pLayoutItems->insertWidget(m_enmOrder == Qt::AscendingOrder ? -1 : 0, pItem);
 }
