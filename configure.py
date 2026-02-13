@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112991 2026-02-13 10:19:11Z andreas.loeffler@oracle.com $
+# $Id: configure.py 113001 2026-02-13 13:48:25Z andreas.loeffler@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112991 $"
+__revision__ = "$Revision: 113001 $"
 
 import argparse
 import ctypes
@@ -600,11 +600,12 @@ def getPosixError(uCode):
         return f"Killed by signal {sName} ({sDesc})";
     return f"Killed by signal {sName}";
 
-def compileAndExecute(sName, asIncPaths, asLibPaths, asIncFiles, asLibFiles, sCode, \
-                      enmBuildTarget = g_enmHostTarget, enmBuildArch = g_enmHostArch,
-                      oEnv = None, asCompilerArgs = None, asLinkerArgs = None, asDefines = None, fLog = True, fErrorsAsWarnings = False):
+def compileAndRun(sName, asIncPaths, asLibPaths, asIncFiles, asLibFiles, \
+                  sCode, fRun = True, \
+                  enmBuildTarget = g_enmHostTarget, enmBuildArch = g_enmHostArch,
+                  oEnv = None, asCompilerArgs = None, asLinkerArgs = None, asDefines = None, fLog = True, fErrorsAsWarnings = False):
     """
-    Compiles and executes a test program.
+    Compiles and runs (executes) a test program.
 
     Returns a tuple (Success, StdOut, StdErr).
     """
@@ -702,37 +703,40 @@ def compileAndExecute(sName, asIncPaths, asLibPaths, asIncFiles, asLibFiles, sCo
                 fnLog(sStdOut, fDontCount = True);
         else:
             printLog(f'Compilation of test program for {sName} successful');
-            # Try executing the compiled binary and capture stdout + stderr.
-            try:
-                printVerbose(2, f"Executing '{sFileImage}' ...");
-                oProc = subprocess.run([sFileImage], env = oProcEnv.env, shell = True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, check = False, timeout = 10);
-                if oProc.returncode == 0:
-                    printLog(f'Running test program for {sName} successful (exit code 0)');
-                    sStdOut = oProc.stdout.decode('utf-8', 'replace').strip();
-                    fRet = True;
-                else:
-                    sStdErr = oProc.stderr.decode("utf-8", errors="ignore") if oProc.stderr else None;
+            if not fRun:
+            	fRet  = True;
+            else:
+                # Try executing the compiled binary and capture stdout + stderr.
+                try:
+                    printVerbose(2, f"Executing '{sFileImage}' ...");
+                    oProc = subprocess.run([sFileImage], env = oProcEnv.env, shell = True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, check = False, timeout = 10);
+                    if oProc.returncode == 0:
+                        printLog(f'Running test program for {sName} successful (exit code 0)');
+                        sStdOut = oProc.stdout.decode('utf-8', 'replace').strip();
+                        fRet = True;
+                    else:
+                        sStdErr = oProc.stderr.decode("utf-8", errors="ignore") if oProc.stderr else None;
+                        if fLog:
+                            fnLog = printError;
+                            if enmBuildTarget not in [ BuildTarget.WINDOWS ]:
+                                # Some build boxes don't like running X stuff and simply SIGSEGV, so just skip those errors for now.
+                                if oProc.returncode == -11 \
+                                or oProc.returncode == 139: # 128 + Signal number
+                                    printVerbose(1, f'Treating return code {oProc.returncode} as warning instead of error');
+                                    printVerbose(1,  'Running on headless build box (no X11, ...)?');
+                                    fnLog = printWarn; # Just warn, don't fail.
+                                    fRet  = True;      # Ditto.
+                            fnLog(f"Execution of test binary for {sName} failed with return code {oProc.returncode}:");
+                            if enmBuildTarget == BuildTarget.WINDOWS:
+                                fnLog(f"Windows Error { getWinError(oProc.returncode) }", fDontCount = True);
+                            else:
+                                fnLog(getPosixError(oProc.returncode), fDontCount = True);
+                            if sStdErr:
+                                fnLog(sStdErr, fDontCount = True);
+                except subprocess.SubprocessError as ex:
                     if fLog:
-                        fnLog = printError;
-                        if enmBuildTarget not in [ BuildTarget.WINDOWS ]:
-                            # Some build boxes don't like running X stuff and simply SIGSEGV, so just skip those errors for now.
-                            if oProc.returncode == -11 \
-                            or oProc.returncode == 139: # 128 + Signal number
-                                printVerbose(1, f'Treating return code {oProc.returncode} as warning instead of error');
-                                printVerbose(1,  'Running on headless build box (no X11, ...)?');
-                                fnLog = printWarn; # Just warn, don't fail.
-                                fRet  = True;      # Ditto.
-                        fnLog(f"Execution of test binary for {sName} failed with return code {oProc.returncode}:");
-                        if enmBuildTarget == BuildTarget.WINDOWS:
-                            fnLog(f"Windows Error { getWinError(oProc.returncode) }", fDontCount = True);
-                        else:
-                            fnLog(getPosixError(oProc.returncode), fDontCount = True);
-                        if sStdErr:
-                            fnLog(sStdErr, fDontCount = True);
-            except subprocess.SubprocessError as ex:
-                if fLog:
-                    printError(f"Execution of test binary for {sName} failed: {str(ex)}");
-                    printError(f'    {sFileImage}', fDontCount = True);
+                        printError(f"Execution of test binary for {sName} failed: {str(ex)}");
+                        printError(f'    {sFileImage}', fDontCount = True);
     except PermissionError as e:
         printError(f'Compiler not found: {str(e)}');
     except FileNotFoundError as e:
@@ -1088,7 +1092,8 @@ class LibraryCheck(CheckBase):
     Describes and checks for a library / package.
     """
     def __init__(self, sName, asIncFiles, asLibFiles,
-                 enmBuildTarget = g_enmHostTarget, enmBuildArch = g_enmHostArch, aeTargets = None, aeArchs = None, sCode = None,
+                 enmBuildTarget = g_enmHostTarget, enmBuildArch = g_enmHostArch, aeTargets = None, aeArchs = None, 
+                 sCode = None, fRun = True,
                  asIncPaths = None, asLibPaths = None,
                  fnCallback = None, aeTargetsExcluded = None, fUseInTree = False, sSdkName = None,
                  dictDefinesToSetIfFailed = None):
@@ -1104,6 +1109,9 @@ class LibraryCheck(CheckBase):
         # The following indices are for auxillary libraries needed.
         # Without suffix a dynamic library will be ASSUMED.
         self.asLibFiles = asLibFiles or [];
+        # Whether run (execute) the optional test or or just compile it.
+        # Defaults to True (compile + execute).
+        self.fRun  = fRun;
         # Optional C/C++ test code to compile and execute to proof that the library is installed correctly
         # and in a working shape.
         self.sCode = sCode;
@@ -1163,9 +1171,9 @@ class LibraryCheck(CheckBase):
                 return '\n'.join(sIncludes) + '#include <iostream>\nint main() {{ std::cout << "<found>" << std::endl; return 0; }}\n';
         return '\n'.join(sIncludes) + '#include <stdio.h>\nint main(void) {{ printf("<found>"); return 0; }}\n';
 
-    def compileAndExecute(self, fErrorsAsWarnings):
+    def compileAndRun(self, fErrorsAsWarnings):
         """
-        Attempts to compile and execute test code using the discovered paths and headers.
+        Attempts to compile and run (execute) test code using the discovered paths and headers.
 
         Returns a tuple (Success, StdOut, StdErr).
         """
@@ -1178,11 +1186,12 @@ class LibraryCheck(CheckBase):
         self.asIncPaths = list(set(self.asIncPaths));
         self.asLibPaths = list(set(self.asLibPaths));
 
-        fRc, sStdOut, sStdErr = compileAndExecute(self.sName, \
-                                                  self.asIncPaths, self.asLibPaths, self.asHdrFiles, self.asLibFiles, \
-                                                  sCode, enmBuildTarget = self.enmBuildTarget, enmBuildArch = self.enmBuildArch,
-                                                  asCompilerArgs = self.asCompilerArgs, asLinkerArgs = self.asLinkerArgs, asDefines = self.asDefines,
-                                                  fErrorsAsWarnings = fErrorsAsWarnings);
+        fRc, sStdOut, sStdErr = compileAndRun(self.sName, \
+                                              self.asIncPaths, self.asLibPaths, self.asHdrFiles, self.asLibFiles, \
+                                              sCode, self.fRun, 
+                                              enmBuildTarget = self.enmBuildTarget, enmBuildArch = self.enmBuildArch,
+                                              asCompilerArgs = self.asCompilerArgs, asLinkerArgs = self.asLinkerArgs, asDefines = self.asDefines,
+                                              fErrorsAsWarnings = fErrorsAsWarnings);
         if fRc and sStdOut:
             self.sVer = sStdOut;
         return fRc, sStdOut, sStdErr;
@@ -1566,7 +1575,7 @@ class LibraryCheck(CheckBase):
                     #   - there are defines to disable the feature.
                     fMayFail = self.fUseInTree or len(self.dictDefinesToSetIfFailed) > 0;
                     # Only try to compile libraries which are not in-tree, as we only have sources in-tree, not binaries.
-                    fRc, _, _ = self.compileAndExecute(fErrorsAsWarnings = fMayFail);
+                    fRc, _, _ = self.compileAndRun(fErrorsAsWarnings = fMayFail);
                     if not fRc:
                         self.fHave = None if fMayFail else False;
                     else:
@@ -2754,8 +2763,8 @@ int main()
         # Make sure that the Python .dll / .so files are in PATH.
         g_oEnv.prependPath('PATH', sysconfig.get_paths()[ 'data' ]);
 
-        if compileAndExecute('Python C API', [ asPathInc ], asLibDir, [ ], asLib, sCode, \
-                             enmBuildTarget = self.enmBuildTarget, enmBuildArch = self.enmBuildArch):
+        if compileAndRun('Python C API', [ asPathInc ], asLibDir, [ ], asLib, sCode, \
+                         enmBuildTarget = self.enmBuildTarget, enmBuildArch = self.enmBuildArch):
             g_oEnv.set('VBOX_PATH_PYTHON_INC', asPathInc);
             g_oEnv.set('VBOX_LIB_PYTHON', asLibDir[0] if len(asLibDir) > 0 else None);
             return True;
@@ -3331,15 +3340,15 @@ g_aoLibs = [
     LibraryCheck("libsdl2_ttf", [ "SDL2/SDL_ttf.h" ], [ "libSDL2_ttf" ],
                  sCode = '#include <SDL2/SDL_ttf.h>\nint main() { printf("%d.%d.%d", SDL_TTF_MAJOR_VERSION, SDL_TTF_MINOR_VERSION, SDL_TTF_PATCHLEVEL); return 0; }\n',
                  dictDefinesToSetIfFailed = { 'VBOX_WITH_SECURE_LABEL' : '' }),
-    LibraryCheck("libx11", [ "X11/Xlib.h" ], [ "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    LibraryCheck("libx11", [ "X11/Xlib.h" ], [ "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ], fRun = False,
                  sCode = '#include <X11/Xlib.h>\nint main() { Display *d = XOpenDisplay(NULL); XCloseDisplay(d); printf("<found>"); return 0; }\n'),
     LibraryCheck("libxext", [ "X11/extensions/Xext.h" ], [ "libXext" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <X11/Xlib.h>\n#include <X11/extensions/Xext.h>\nint main() { XSetExtensionErrorHandler(NULL); printf("<found>"); return 0; }\n'),
-    LibraryCheck("libxmu", [ "X11/Xmu/Xmu.h" ], [ "libXmu" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    LibraryCheck("libxmu", [ "X11/Xmu/Xmu.h" ], [ "libXmu" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ], fRun = False,
                  sCode = '#include <X11/Xmu/Xmu.h>\nint main() { XmuMakeAtom("test"); printf("<found>"); return 0; }\n', aeTargetsExcluded=[ BuildTarget.DARWIN ]),
-    LibraryCheck("libxrandr", [ "X11/extensions/Xrandr.h" ], [ "libXrandr", "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    LibraryCheck("libxrandr", [ "X11/extensions/Xrandr.h" ], [ "libXrandr", "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ], fRun = False,
                  sCode = '#include <X11/Xlib.h>\n#include <X11/extensions/Xrandr.h>\nint main() { Display *dpy = XOpenDisplay(NULL); Window root = RootWindow(dpy, 0); XRRScreenConfiguration *c = XRRGetScreenInfo(dpy, root); printf("<found>"); return 0; }\n'),
-    LibraryCheck("libxinerama", [ "X11/extensions/Xinerama.h" ], [ "libXinerama", "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    LibraryCheck("libxinerama", [ "X11/extensions/Xinerama.h" ], [ "libXinerama", "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ], fRun = False,
                  sCode = '#include <X11/Xlib.h>\n#include <X11/extensions/Xinerama.h>\nint main() { Display *dpy = XOpenDisplay(NULL); XineramaIsActive(dpy); printf("<found>"); return 0; }\n')
 ];
 
