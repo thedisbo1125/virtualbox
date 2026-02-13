@@ -1,4 +1,4 @@
-/* $Id: UIMessageCenter.cpp 112976 2026-02-12 16:43:36Z sergey.dubov@oracle.com $ */
+/* $Id: UIMessageCenter.cpp 113012 2026-02-13 14:58:22Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMessageCenter class implementation.
  */
@@ -1549,26 +1549,6 @@ bool UIMessageCenter::warnAboutNetworkInterfaceNotFound(const QString &strMachin
                              .arg(strMachineName, strIfNames),
                           0 /* auto-confirm id */,
                           tr("Change Network Settings"), tr("Close VM"));
-}
-
-void UIMessageCenter::warnAboutVBoxSVCUnavailable() const
-{
-    alert(0, MessageType_Critical,
-          tr("<p>A critical error has occurred while running the virtual "
-             "machine and the machine execution should be stopped.</p>"
-             ""
-             "<p>For help, please see the Community section on "
-             "<a href=https://www.virtualbox.org>https://www.virtualbox.org</a> "
-             "or your support contract. Please provide the contents of the "
-             "log file <tt>VBox.log</tt>, "
-             "which you can find in the virtual machine log directory, "
-             "as well as a description of what you were doing when this error happened. "
-             ""
-             "Note that you can also access the above file by selecting <b>Show Log</b> "
-             "from the <b>Machine</b> menu of the main VirtualBox window.</p>"
-             ""
-             "<p>Press <b>OK</b> to power off the machine.</p>"),
-          0 /* auto-confirm id */);
 }
 
 bool UIMessageCenter::warnAboutGuruMeditation(const QString &strLogFolder)

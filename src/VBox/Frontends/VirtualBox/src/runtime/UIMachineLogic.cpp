@@ -1,4 +1,4 @@
-/* $Id: UIMachineLogic.cpp 112957 2026-02-11 15:18:35Z sergey.dubov@oracle.com $ */
+/* $Id: UIMachineLogic.cpp 113012 2026-02-13 14:58:22Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineLogic class implementation.
  */
@@ -373,7 +373,7 @@ void UIMachineLogic::sltHandleVBoxSVCAvailabilityChange()
         return;
 
     /* Warn user about that: */
-    msgCenter().warnAboutVBoxSVCUnavailable();
+    UINotificationMessage::warnAboutVBoxSVCUnavailable();
 
     /* Power VM off: */
     LogRel(("GUI: Request to power VM off due to VBoxSVC is unavailable.\n"));

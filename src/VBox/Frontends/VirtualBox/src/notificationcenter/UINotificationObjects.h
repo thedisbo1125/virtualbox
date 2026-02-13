@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.h 112976 2026-02-12 16:43:36Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.h 113012 2026-02-13 14:58:22Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects declarations.
  */
@@ -312,6 +312,9 @@ public:
         static void remindAboutWrongColorDepth(ulong uRealBPP, ulong uWantedBPP);
         /** Revokes message about wrong color depth. */
         static void forgetAboutWrongColorDepth();
+
+        /** Reminds about VBoxSVC unavailable. */
+        static void warnAboutVBoxSVCUnavailable();
     /** @} */
 
     /** @name COM general warnings.
