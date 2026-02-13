@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 113003 2026-02-13 13:51:46Z andreas.loeffler@oracle.com $
+# $Id: configure.py 113016 2026-02-13 15:48:27Z andreas.loeffler@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 113003 $"
+__revision__ = "$Revision: 113016 $"
 
 import argparse
 import ctypes
@@ -2805,6 +2805,23 @@ int main()
                 return False;
         return True;
 
+    def checkValidationKit(self):
+        """
+        Checks for the Validation Kit requirements.
+        """
+
+        # We currently need NASM 2.16 for building the bs3 sources.
+        oToolNASM = next((lib for lib in g_aoTools if lib.sName == 'nasm'), None)
+        if oToolNASM:
+            if oToolNASM.sVer:
+                oMatch = re.search(r"version\s+([0-9]+(?:\.[0-9]+)*)", oToolNASM.sVer);
+                if oMatch:
+                    sVer = oMatch.group(1);
+                    if tuple(map(int, sVer.split('.'))) < (2, 16, 0):
+                        g_oEnv.set('VBOX_WITH_VALIDATIONKIT', '');
+
+        return True;
+
     def checkCallback_XCode(self):
         """
         Checks for Xcode and Command Line Tools on macOS.
@@ -3379,6 +3396,7 @@ g_aoTools = [
     ToolCheck("python_modules", asCmd = [ ], fnCallback = ToolCheck.checkCallback_PythonModules,
               aeTargets = [ BuildTarget.DARWIN, BuildTarget.LINUX, BuildTarget.SOLARIS ],
               dictDefinesToSetIfFailed = { 'VBOX_WITH_PYTHON' : '' }),
+    ToolCheck("validationkit", asCmd = [], fnCallback = ToolCheck.checkValidationKit),
     ToolCheck("xcode", asCmd = [], fnCallback = ToolCheck.checkCallback_XCode, aeTargets = [ BuildTarget.DARWIN ]),
     ToolCheck("yasm", asCmd = [ 'yasm' ], fnCallback = ToolCheck.checkCallback_YASM),
     # Windows exclusive tools below (so that it can be invoked with --with-win-nsis-path, for instance).
@@ -3878,8 +3896,9 @@ def main():
         lambda env: { 'VBOX_WITH_DOCS_PACKING': '' } if g_oArgs.config_only_additions
                                                      or g_oEnv['VBOX_WITH_DOCS'] == '' else {},
         lambda env: { 'VBOX_WITH_WEBSERVICES': '' } if g_oArgs.config_only_additions else {},
-        # Disable stuff which aren't available in OSE.
-        lambda env: { 'VBOX_WITH_VALIDATIONKIT': '' , 'VBOX_WITH_WIN32_ADDITIONS': '' } if g_oArgs.config_ose else {},
+        # Disable stuff which aren't available in OSE or if building the Validation Kit is disabled.
+        lambda env: { 'VBOX_WITH_VALIDATIONKIT': '' , 'VBOX_WITH_WIN32_ADDITIONS': '' } if g_oArgs.config_ose
+                                                                                        or g_oArgs.config_tools_validationkit_disabled else {},
         # Disable building the Extension Pack VNC feature when only building Additions.
         lambda env: { 'VBOX_WITH_EXTPACK_VNC': '' } if g_oArgs.config_only_additions
                                                     or g_oArgs.config_ose else {},
