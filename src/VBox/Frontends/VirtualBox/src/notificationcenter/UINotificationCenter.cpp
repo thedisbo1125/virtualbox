@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.cpp 113008 2026-02-13 14:31:38Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.cpp 113009 2026-02-13 14:36:46Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class implementation.
  */
@@ -192,6 +192,7 @@ UINotificationCenter::UINotificationCenter(QWidget *pParent)
     , m_pLayoutItems(0)
     , m_pStateMachineSliding(0)
     , m_iAnimatedValue(0)
+    , m_fExtendedMode(false)
     , m_pTimerOpen(0)
     , m_fLastResult(false)
 {
@@ -271,6 +272,9 @@ void UINotificationCenter::showBlocking(UINotificationMessage *pMessage)
     /* Check for the recursive run: */
     AssertMsgReturnVoid(!m_pEventLoop, ("UINotificationCenter::showBlocking() is called recursively!\n"));
 
+    /* Switch to extended mode: */
+    m_fExtendedMode = true;
+
     /* Guard message for the case
      * it destroyed itself in his append call: */
     QPointer<UINotificationMessage> guardMessage = pMessage;
@@ -300,6 +304,7 @@ void UINotificationCenter::showBlocking(UINotificationMessage *pMessage)
 
     /* Revert values back: */
     m_uId = QUuid();
+    m_fExtendedMode = false;
 }
 
 bool UINotificationCenter::handleNow(UINotificationProgress *pProgress)
@@ -949,7 +954,8 @@ void UINotificationCenter::adjustGeometry()
     const int iMinimumButtonWidth = m_pButtonOpen->minimumSizeHint().width() + iL + iR;
 
     /* Make sure we have some default width if there is no contents: */
-    iMinimumWidth = qMax(iMinimumWidth, 200);
+    const int iMaxSize = m_fExtendedMode ? iParentWidth : 200;
+    iMinimumWidth = qMax(iMinimumWidth, iMaxSize);
 
     /* Move and resize notification-center finally: */
     move(iParentWidth - (iMinimumButtonWidth + (double)animatedValue() / 100 * (iMinimumWidth - iMinimumButtonWidth)), 0);

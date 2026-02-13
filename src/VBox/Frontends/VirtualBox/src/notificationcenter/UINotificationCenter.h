@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.h 113008 2026-02-13 14:31:38Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.h 113009 2026-02-13 14:36:46Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class declaration.
  */
@@ -228,6 +228,8 @@ private:
     QStateMachine *m_pStateMachineSliding;
     /** Holds the sliding animation current value. */
     int            m_iAnimatedValue;
+    /** Holds whether we're in extended mode. */
+    bool           m_fExtendedMode;
 
     /** Holds the open-timer instance. */
     QTimer *m_pTimerOpen;
