@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.cpp 112974 2026-02-12 15:00:24Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.cpp 113006 2026-02-13 14:28:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class implementation.
  */
@@ -274,9 +274,7 @@ void UINotificationCenter::showBlocking(UINotificationMessage *pMessage)
     /* Guard message for the case
      * it destroyed itself in his append call: */
     QPointer<UINotificationMessage> guardMessage = pMessage;
-    connect(pMessage, &UINotificationMessage::sigAboutToClose,
-            this, &UINotificationCenter::sltHandleMessageClosed);
-    append(pMessage);
+    m_uId = append(pMessage);
 
     /* Is progress still valid? */
     if (guardMessage.isNull())
@@ -299,6 +297,9 @@ void UINotificationCenter::showBlocking(UINotificationMessage *pMessage)
 
     /* Cleanup event-loop: */
     m_pEventLoop = 0;
+
+    /* Revert values back: */
+    m_uId = QUuid();
 }
 
 bool UINotificationCenter::handleNow(UINotificationProgress *pProgress)
@@ -569,12 +570,10 @@ void UINotificationCenter::sltHandleModelItemRemoved(const QUuid &uId)
     setHidden(m_pModel->ids().isEmpty());
     if (m_pModel->ids().isEmpty() && m_pButtonOpen->isChecked())
         m_pButtonOpen->toggle();
-}
 
-void UINotificationCenter::sltHandleMessageClosed()
-{
-    /* Break the loop if exists: */
-    if (m_pEventLoop)
+    /* If that's the item which locked the loop,
+     * We should break the loop if it exists: */
+    if (uId == m_uId && m_pEventLoop)
         m_pEventLoop->exit();
 }
 

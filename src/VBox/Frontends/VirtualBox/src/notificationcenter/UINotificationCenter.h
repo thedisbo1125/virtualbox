@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.h 112974 2026-02-12 15:00:24Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.h 113006 2026-02-13 14:28:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class declaration.
  */
@@ -98,7 +98,7 @@ public:
     void revoke(const QUuid &uId);
 
     /** Immediately and synchronously shows passed notification @a pMessage.
-      * @note It's a blocking call finished by sltHandleMessageClosed(). */
+      * @note It's a blocking call finished by sltHandleModelItemRemoved(). */
     void showBlocking(UINotificationMessage *pMessage);
     /** Immediately and synchronously handles passed notification @a pProgress.
       * @note It's a blocking call finished by sltHandleProgressFinished(). */
@@ -149,9 +149,6 @@ private slots:
     /** Handles signal about model item with specified @a uId was removed. */
     void sltHandleModelItemRemoved(const QUuid &uId);
 
-    /** Handles immediate message being closed.
-      * @note Breaks blocking showBlocking() call. */
-    void sltHandleMessageClosed();
     /** Handles immediate progress being finished.
       * @note Breaks blocking handleNow() call. */
     void sltHandleProgressFinished();
@@ -238,6 +235,8 @@ private:
       * @note  This event-loop is only used when the center
       *        handles progress directly via handleNow(). */
     QPointer<QEventLoop>  m_pEventLoop;
+    /** Holds the ID of message locked the loop. */
+    QUuid                 m_uId;
     /** Holds the last handleNow() result. */
     bool                  m_fLastResult;
 };
