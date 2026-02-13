@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: tdGuestOsUnattendedInst1.py 112966 2026-02-12 09:57:50Z serkan.bayraktar@oracle.com $
+# $Id: tdGuestOsUnattendedInst1.py 112993 2026-02-13 11:10:46Z serkan.bayraktar@oracle.com $
 
 """
 VirtualBox Validation Kit - Guest OS unattended installation tests.
@@ -37,14 +37,14 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 112966 $"
+__version__ = "$Revision: 112993 $"
 
 
 # Standard Python imports.
 import copy;
 import os;
 import sys;
-
+import pdb;
 
 # Only the main script needs to modify the path.
 try:    __file__                            # pylint: disable=used-before-assignment
@@ -470,9 +470,14 @@ class UnattendedVm(vboxtestvms.BaseTestVm):
         #
         # Check if the OS type matches.
         #
-        if self.sKind != sDetectedOSTypeId:
-            return reporter.error('sInstallIso=%s: DetectedOSTypeId is %s, expected %s'
-                                  % (sInstallIso, sDetectedOSTypeId, self.sKind));
+        if oTestDrv.fpApiVer <= 7.1:
+            if re.match(r'^\D*', self.sKind).group(0) != re.match(r'^\D*', sDetectedOSTypeId).group(0):
+                return reporter.error('sInstallIso=%s: Prefixes of  %s and %s do not match'
+                                      % (sInstallIso, sDetectedOSTypeId, self.sKind));
+        else:
+            if self.sKind != sDetectedOSTypeId:
+                return reporter.error('sInstallIso=%s: DetectedOSTypeId is %s, expected %s'
+                                      % (sInstallIso, sDetectedOSTypeId, self.sKind));
 
         return True;
 
