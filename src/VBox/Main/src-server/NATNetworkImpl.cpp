@@ -1,4 +1,4 @@
-/* $Id: NATNetworkImpl.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NATNetworkImpl.cpp 113027 2026-02-14 00:50:48Z jack.doherty@oracle.com $ */
 /** @file
  * INATNetwork implementation.
  */
@@ -966,7 +966,7 @@ void NATNetwork::i_updateDomainNameServerOption(ComPtr<IHost> &host)
         }
 
         if (lstServers.isEmpty() && fUnmappedLoopback)
-            lstServers.append(RTCStringFmt("%RTnaipv4", networkid.u | RT_H2N_U32_C(1U))); /* proxy */
+            lstServers.append(RTCStringFmt("%RTnaipv4", networkid.u | RT_H2N_U32_C(3U))); /* proxy */
 
         hrc = pDHCPConfig->SetOption(DHCPOption_DomainNameServers, DHCPOptionEncoding_Normal, Bstr(RTCString::join(lstServers, " ")).raw());
         if (FAILED(hrc))
