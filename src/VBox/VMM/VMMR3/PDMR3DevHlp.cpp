@@ -1,4 +1,4 @@
-/* $Id: PDMR3DevHlp.cpp 112983 2026-02-12 20:21:07Z alexander.eichner@oracle.com $ */
+/* $Id: PDMR3DevHlp.cpp 113038 2026-02-16 13:11:01Z alexander.eichner@oracle.com $ */
 /** @file
  * PDM - Pluggable Device and Driver Manager, Device Helpers.
  */
@@ -2044,7 +2044,7 @@ static DECLCALLBACK(int) pdmR3DevHlp_PCIRegister(PPDMDEVINS pDevIns, PPDMPCIDEV 
          */
         RT_ZERO(pPciDev->Int);
 
-        pPciDev->Int.s.idxDevCfg = pPciDev->Int.s.idxSubDev;
+        pPciDev->Int.s.idxDevCfg = pPciDev->idxSubDev;
         pPciDev->Int.s.fReassignableDevNo = uPciDevNoRaw >= VBOX_PCI_MAX_DEVICES;
         pPciDev->Int.s.fReassignableFunNo = uPciFunNo >= VBOX_PCI_MAX_FUNCTIONS;
         pPciDev->Int.s.pDevInsR3 = pDevIns;
