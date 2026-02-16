@@ -1,4 +1,4 @@
-/* $Id: UIMachineSettingsPortForwardingDlg.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineSettingsPortForwardingDlg.h 113039 2026-02-16 13:51:39Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineSettingsPortForwardingDlg class declaration.
  */
@@ -45,25 +45,31 @@ class SHARED_LIBRARY_STUFF UIMachineSettingsPortForwardingDlg : public QIDialog
 
 public:
 
-    /* Constructor/destructor: */
+    /** Constructs Port-forwarding dialog passing @a pParent to base-class.
+      * @param  rules  Brings a list of current port-forwarding rules. */
     UIMachineSettingsPortForwardingDlg(QWidget *pParent, const UIPortForwardingDataList &rules);
 
-    /* API: Rules stuff: */
-    const UIPortForwardingDataList rules() const;
+    /** Returns a list of current port-forwarding rules. */
+    UIPortForwardingDataList rules() const;
+
+protected:
+
+    /** Dismisses dialog, accepting result. */
+    virtual void accept() RT_OVERRIDE;
+    /** Dismisses dialog, rejecting result. */
+    virtual void reject() RT_OVERRIDE;
 
 private slots:
 
-    /* Handlers: Dialog stuff: */
-    void accept() RT_OVERRIDE;
-    void reject() RT_OVERRIDE;
-    /* Handler: Translation stuff: */
+    /** Handles translation event. */
     void sltRetranslateUI();
 
 private:
 
-    /* Widgets: */
+    /** Holds the table instance. */
     UIPortForwardingTable *m_pTable;
-    QIDialogButtonBox *m_pButtonBox;
+    /** Holds the button-box instance. */
+    QIDialogButtonBox     *m_pButtonBox;
 };
 
 #endif /* !FEQT_INCLUDED_SRC_settings_machine_UIMachineSettingsPortForwardingDlg_h */
