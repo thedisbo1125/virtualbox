@@ -1,4 +1,4 @@
-/* $Id: UIVMInformationDialog.cpp 112954 2026-02-11 14:42:55Z sergey.dubov@oracle.com $ */
+/* $Id: UIVMInformationDialog.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMInformationDialog class implementation.
  */
@@ -46,13 +46,13 @@
 #include "UIMachineLogic.h"
 #include "UIMachine.h"
 #include "UIMachineView.h"
-#include "UIMessageCenter.h"
 #include "UIVMActivityMonitorContainer.h"
 #include "UISession.h"
 #include "UIShortcutPool.h"
 #include "UITranslationEventListener.h"
 #include "UIVirtualBoxEventHandler.h"
 #include "UIVMInformationDialog.h"
+
 
 UIVMInformationDialog::UIVMInformationDialog(UIActionPool *pActionPool)
     : QIMainWindow(0)

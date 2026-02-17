@@ -1,4 +1,4 @@
-/* $Id: UIVMLogViewerWidget.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVMLogViewerWidget.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMLogViewerWidget class implementation.
  */
@@ -56,7 +56,6 @@
 #include "UIExtraDataManager.h"
 #include "UIGlobalSession.h"
 #include "UIIconPool.h"
-#include "UIMessageCenter.h"
 #include "UITranslationEventListener.h"
 #include "UIVirtualMachineItem.h"
 #include "UIVMLogPage.h"

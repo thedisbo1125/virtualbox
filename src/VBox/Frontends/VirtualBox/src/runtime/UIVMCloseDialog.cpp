@@ -1,4 +1,4 @@
-/* $Id: UIVMCloseDialog.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVMCloseDialog.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMCloseDialog class implementation.
  */
@@ -45,7 +45,6 @@
 #include "UIExtraDataManager.h"
 #include "UIIconPool.h"
 #include "UIMachine.h"
-#include "UIMessageCenter.h"
 #include "UIShortcutPool.h"
 #include "UITranslationEventListener.h"
 #include "UIVMCloseDialog.h"

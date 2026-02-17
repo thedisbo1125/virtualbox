@@ -1,4 +1,4 @@
-/* $Id: UIBootFailureDialog.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIBootFailureDialog.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIBootTimeErrorDialog class implementation.
  */
@@ -45,7 +45,6 @@
 #include "UIExtraDataManager.h"
 #include "UIFilePathSelector.h"
 #include "UIIconPool.h"
-#include "UIMessageCenter.h"
 #include "UIMediumTools.h"
 #include "UIModalWindowManager.h"
 #include "UITranslationEventListener.h"

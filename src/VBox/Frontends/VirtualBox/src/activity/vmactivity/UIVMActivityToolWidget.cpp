@@ -1,4 +1,4 @@
-/* $Id: UIVMActivityToolWidget.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVMActivityToolWidget.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityToolWidget class implementation.
  */
@@ -36,7 +36,6 @@
 #include "UICommon.h"
 #include "UIVMActivityMonitor.h"
 #include "UIVMActivityToolWidget.h"
-#include "UIMessageCenter.h"
 #include "UIVirtualMachineItem.h"
 #include "UIVirtualMachineItemCloud.h"
 #include "UIVirtualMachineItemLocal.h"
@@ -47,6 +46,7 @@
 
 /* COM includes: */
 #include "CMachine.h"
+
 
 UIVMActivityToolWidget::UIVMActivityToolWidget(EmbedTo enmEmbedding, UIActionPool *pActionPool,
                                                  bool fShowToolbar /* = true */, QWidget *pParent /* = 0 */)

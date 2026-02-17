@@ -1,4 +1,4 @@
-/* $Id: UIFileManagerGuestTable.cpp 112751 2026-01-29 16:30:52Z sergey.dubov@oracle.com $ */
+/* $Id: UIFileManagerGuestTable.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIFileManagerGuestTable class implementation.
  */
@@ -48,7 +48,6 @@
 #include "UIGlobalSession.h"
 #include "UIIconPool.h"
 #include "UILocalMachineStuff.h"
-#include "UIMessageCenter.h"
 #include "UIPathOperations.h"
 #include "UIUserNamePasswordEditor.h"
 #include "UIVirtualBoxEventHandler.h"
@@ -66,6 +65,7 @@
 
 /* Other VBox includes: */
 #include <iprt/err.h>
+
 
 /*********************************************************************************************************************************
 *   UIGuestSessionWidget definition.                                                                                   *

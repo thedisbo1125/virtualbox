@@ -1,4 +1,4 @@
-/* $Id: UIDetailsWidgetCloudNetwork.cpp 112898 2026-02-09 12:49:32Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsWidgetCloudNetwork.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsWidgetCloudNetwork class implementation.
  */
@@ -45,7 +45,6 @@
 #include "UIDetailsWidgetCloudNetwork.h"
 #include "UIFormEditorWidget.h"
 #include "UIIconPool.h"
-#include "UIMessageCenter.h"
 #include "UINetworkManager.h"
 #include "UINetworkManagerUtils.h"
 #include "UINotificationCenter.h"

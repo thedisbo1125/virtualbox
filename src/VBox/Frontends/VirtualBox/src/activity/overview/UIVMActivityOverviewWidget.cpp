@@ -1,4 +1,4 @@
-/* $Id: UIVMActivityOverviewWidget.cpp 112723 2026-01-28 12:17:37Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIVMActivityOverviewWidget.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityOverviewWidget class implementation.
  */
@@ -50,7 +50,6 @@
 #include "UIGlobalSession.h"
 #include "UIIconPool.h"
 #include "UILocalMachineStuff.h"
-#include "UIMessageCenter.h"
 #include "UITranslator.h"
 #include "UITranslationEventListener.h"
 #include "UIVirtualBoxEventHandler.h"

@@ -1,4 +1,4 @@
-/* $Id: QIMessageBox.cpp 112752 2026-01-29 16:34:30Z sergey.dubov@oracle.com $ */
+/* $Id: QIMessageBox.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QIMessageBox class implementation.
  */
@@ -46,7 +46,6 @@
 #include "UICommon.h"
 #include "UIIconPool.h"
 #include "UIHelpBrowserDialog.h"
-#include "UIMessageCenter.h"
 
 /* Other VBox includes: */
 #include <iprt/assert.h>
