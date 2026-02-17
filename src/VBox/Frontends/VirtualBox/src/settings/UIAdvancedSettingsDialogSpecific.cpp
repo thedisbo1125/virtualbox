@@ -1,4 +1,4 @@
-/* $Id: UIAdvancedSettingsDialogSpecific.cpp 112918 2026-02-10 11:40:49Z sergey.dubov@oracle.com $ */
+/* $Id: UIAdvancedSettingsDialogSpecific.cpp 113060 2026-02-17 12:01:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIAdvancedSettingsDialogSpecific class implementation.
  */
@@ -37,7 +37,7 @@
 #include "UIIconPool.h"
 #include "UILocalMachineStuff.h"
 #include "UIMessageCenter.h"
-#include "UINotificationObjects.h"
+#include "UINotificationMessage.h"
 #include "UISettingsDefs.h"
 #include "UISettingsSerializer.h"
 #include "UISettingsSelector.h"

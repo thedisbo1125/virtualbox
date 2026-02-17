@@ -1,4 +1,4 @@
-/* $Id: UISettingsSerializer.cpp 112850 2026-02-06 11:10:07Z sergey.dubov@oracle.com $ */
+/* $Id: UISettingsSerializer.cpp 113060 2026-02-17 12:01:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UISettingsSerializer class implementation.
  */
@@ -37,7 +37,7 @@
 #include "QILabel.h"
 #include "UIAdvancedSettingsDialog.h"
 #include "UIIconPool.h"
-#include "UINotificationObjects.h"
+#include "UINotificationMessage.h"
 #include "UISettingsPage.h"
 #include "UISettingsSerializer.h"
 #include "UITranslationEventListener.h"

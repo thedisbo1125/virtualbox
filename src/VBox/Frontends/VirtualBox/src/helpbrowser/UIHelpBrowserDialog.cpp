@@ -1,4 +1,4 @@
-/* $Id: UIHelpBrowserDialog.cpp 112752 2026-01-29 16:34:30Z sergey.dubov@oracle.com $ */
+/* $Id: UIHelpBrowserDialog.cpp 113060 2026-02-17 12:01:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIHelpBrowserDialog class implementation.
  */
@@ -37,7 +37,7 @@
 #include "UIExtraDataManager.h"
 #include "UIHelpBrowserDialog.h"
 #include "UIHelpBrowserWidget.h"
-#include "UINotificationObjects.h"
+#include "UINotificationMessage.h"
 #include "UITranslationEventListener.h"
 #ifndef VBOX_WS_MAC
 # include "UIIconPool.h"

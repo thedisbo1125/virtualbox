@@ -1,4 +1,4 @@
-/* $Id: UIPortForwardingTable.cpp 113044 2026-02-16 14:57:20Z sergey.dubov@oracle.com $ */
+/* $Id: UIPortForwardingTable.cpp 113060 2026-02-17 12:01:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIPortForwardingTable class implementation.
  */
@@ -43,7 +43,7 @@
 #include "QITableView.h"
 #include "UIConverter.h"
 #include "UIIconPool.h"
-#include "UINotificationObjects.h"
+#include "UINotificationMessage.h"
 #include "UIPortForwardingTable.h"
 #include "QIToolBar.h"
 #include "UITranslationEventListener.h"

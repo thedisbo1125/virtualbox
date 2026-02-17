@@ -1,4 +1,4 @@
-/* $Id: UIChooserAbstractModel.cpp 112909 2026-02-09 15:55:52Z sergey.dubov@oracle.com $ */
+/* $Id: UIChooserAbstractModel.cpp 113060 2026-02-17 12:01:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIChooserAbstractModel class implementation.
  */
@@ -42,7 +42,7 @@
 #include "UIGlobalSession.h"
 #include "UILocalMachineStuff.h"
 #include "UILoggingDefs.h"
-#include "UINotificationObjects.h"
+#include "UINotificationMessage.h"
 #include "UIProgressTaskReadCloudMachineList.h"
 #include "UIVirtualBoxEventHandler.h"
 #include "UIVirtualMachineItemCloud.h"

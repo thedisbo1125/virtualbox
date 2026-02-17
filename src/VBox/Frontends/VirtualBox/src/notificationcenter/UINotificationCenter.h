@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.h 113009 2026-02-13 14:36:46Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.h 113060 2026-02-17 12:01:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class declaration.
  */
@@ -40,6 +40,7 @@
 
 /* GUI includes: */
 #include "UILibraryDefs.h"
+#include "UINotificationMessage.h"
 #include "UINotificationObjects.h"
 
 /* Forward declarations: */
