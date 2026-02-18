@@ -1,4 +1,4 @@
-/* $Id: DevPciVfio.cpp 113068 2026-02-18 13:47:54Z alexander.eichner@oracle.com $ */
+/* $Id: DevPciVfio.cpp 113072 2026-02-18 15:52:38Z alexander.eichner@oracle.com $ */
 /** @file
  * PCI passthrough device emulation using VFIO/IOMMUFD.
  */
@@ -809,7 +809,7 @@ static int pciVfioSetupRom(PVFIOPCI pThis, PVFIOPCIFUN pFun, PPDMDEVINS pDevIns)
  */
 static DECLCALLBACK(int) pciVfioIrqPoller(PPDMDEVINS pDevIns, PPDMTHREAD pThread)
 {
-    RT_NOREF(pDevIns);
+    PVFIOPCI    pThis = PDMDEVINS_2_DATA(pDevIns, PVFIOPCI);
     PVFIOPCIFUN pFun = (PVFIOPCIFUN)pThread->pvUser;
     PPDMPCIDEV  pPciDev = pDevIns->apPciDevs[pFun->uPciFun];
 
@@ -821,7 +821,8 @@ static DECLCALLBACK(int) pciVfioIrqPoller(PPDMDEVINS pDevIns, PPDMTHREAD pThread
     struct pollfd   *paIrqFds = (struct pollfd *)RTMemAllocZ(cEntriesAlloc * sizeof(*paIrqFds));
     if (!paIrqFds)
     {
-        LogRel(("VFIO#%d.%u: Failed to allocate memory for %u interrupt polling entries"));
+        LogRel(("VFIO#%d.%u: Failed to allocate memory for %u interrupt polling entries",
+                pThis->iInstance, pFun->uPciFun, cEntriesAlloc));
         return VERR_NO_MEMORY;
     }
 
@@ -855,7 +856,8 @@ static DECLCALLBACK(int) pciVfioIrqPoller(PPDMDEVINS pDevIns, PPDMTHREAD pThread
                 if (!paIrqFdsNew)
                 {
                     /** @todo This is quite wrong, we could allocate all possible entries up front and potentially waste memory... */
-                    LogRel(("VFIO#%d.%u: Failed to allocate memory for %u interrupt polling entries"));
+                    LogRel(("VFIO#%d.%u: Failed to allocate memory for %u interrupt polling entries",
+                            pThis->iInstance, pFun->uPciFun, cEntriesAlloc));
                     RTMemFree(paIrqFds);
                     return VERR_NO_MEMORY;
                 }
