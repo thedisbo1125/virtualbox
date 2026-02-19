@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 113070 2026-02-18 15:16:30Z andreas.loeffler@oracle.com $
+# $Id: configure.py 113094 2026-02-19 16:17:39Z klaus.espenlaub@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -72,7 +72,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 113070 $"
+__revision__ = "$Revision: 113094 $"
 
 import argparse
 import collections;
@@ -447,6 +447,25 @@ def stripLibSuff(sLib):
     # Handle .dylib (macOS), .dll/.lib (Windows), .a (static).
     sLib = re.sub(r'\.(dylib|dll|lib|a)$', '', sLib, flags = re.IGNORECASE);
     return sLib;
+
+def stripPrefix(s, p):
+    """
+    Strips a prefix from a string if present. Exists in Python 3.9 as str.removeprefix(p).
+
+    Returns string with prefix removed.
+    """
+    if s.startswith(p):
+        return s[len(p):];
+    else:
+        return s;
+
+def stripPrefixFromWhitespaceSeparatedString(s, p):
+    """
+    Strips a prefix from all the parts of a string separated by whitespace.
+
+    Returns string with prefixes removed, now separated by single space.
+    """
+    return ' '.join([stripPrefix(str(i), p) for i in s.split()]);
 
 def checkWhich(sCmdName, sToolDesc = None, sCustomPath = None, asVersionSwitches = None, fMultiline = False):
     """
@@ -2022,7 +2041,7 @@ class ToolCheck(CheckBase):
         # Detect binaries.
         sPathBin = None;
         if sPath:
-            asPathBin = [ os.path.join(sPath, 'bin', self.enmBuildTarget + '.' + self.enmBuildArch) ];
+            asPathBin = [ os.path.join(sPath, 'bin'), os.path.join(sPath, 'bin', self.enmBuildTarget + '.' + self.enmBuildArch) ];
             asFile    = [ 'soapcpp2', 'wsdl2h' ];
             for sCurPath in asPathBin:
                 if pathExists(sCurPath):
@@ -2052,6 +2071,7 @@ class ToolCheck(CheckBase):
         sPathImport  = None;
         sPathSource  = None;
         sPathInclude = None;
+        _, sLibs = getPackageVar('gsoapssl++', PkgMgrVar.LIBS);
         if sPath:
             # Imports
             self.printVerbose(1, f"GSOAP base path is '{sPath}'");
@@ -2075,16 +2095,22 @@ class ToolCheck(CheckBase):
 
             # Includes
             asSourcePath = [ os.path.join(sPath, 'share', 'gsoap'),
-                             os.path.join(sPath) ];
+                             sPath,
+                             os.path.join(sPath, 'include') ];
             for sCurPath in asSourcePath:
-                sCurPath = os.path.join(sCurPath, 'stdsoap2.h');
-                if isFile(sCurPath):
-                    self.printVerbose(1, f"GSOAP includes found at '{sCurPath}'");
+                sCurHdrPath = os.path.join(sCurPath, 'stdsoap2.h');
+                if isFile(sCurHdrPath):
+                    self.printVerbose(1, f"GSOAP includes found at '{sCurHdrPath}'");
                     sPathInclude = sCurPath;
+                    if sCurPath == '/usr/include':
+                        sPathInclude = None;
                     break;
 
         if sPathSource:
             self.sCmdPath = sPathSource; # To show the source path in the summary table.
+        elif sLibs:
+            self.sCmdPath = sLibs; # To show the library path in the summary table.
+            sPathSource = ''; # Force setting the environment variable below to empty.
         else:
             if not g_oEnv['VBOX_WITH_WEBSERVICES'] \
             or     g_oEnv['VBOX_WITH_WEBSERVICES'] == '1':
@@ -2094,6 +2120,8 @@ class ToolCheck(CheckBase):
 
         g_oEnv.set('VBOX_GSOAP_CXX_SOURCES', sPathSource);
         g_oEnv.set('VBOX_GSOAP_CXX_INCS', sPathInclude);
+        if sLibs:
+            g_oEnv.set('VBOX_GSOAP_CXX_LIBS', stripPrefixFromWhitespaceSeparatedString(sLibs, '-l'));
         g_oEnv.set('VBOX_PATH_GSOAP_IMPORT', sPathImport);
         return True;
 
