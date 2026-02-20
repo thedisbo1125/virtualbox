@@ -1,4 +1,4 @@
-/* $Id: DevPciVfio.cpp 113100 2026-02-19 19:37:50Z alexander.eichner@oracle.com $ */
+/* $Id: DevPciVfio.cpp 113101 2026-02-20 09:03:30Z alexander.eichner@oracle.com $ */
 /** @file
  * PCI passthrough device emulation using VFIO/IOMMUFD.
  */
@@ -432,6 +432,7 @@ DECLINLINE(int) pciVfioCfgSpaceReadU32(PCVFIOPCIFUN pFun, uint32_t offReg, uint3
 }
 
 
+#if 0 /* unused */
 DECLINLINE(int) pciVfioCfgSpaceReadU64(PCVFIOPCIFUN pFun, uint32_t offReg, uint64_t *pu64)
 {
     ssize_t cb = pread(pFun->iFdVfio, pu64, 8, pFun->offPciCfg + offReg);
@@ -440,6 +441,7 @@ DECLINLINE(int) pciVfioCfgSpaceReadU64(PCVFIOPCIFUN pFun, uint32_t offReg, uint6
 
     return VINF_SUCCESS;
 }
+#endif
 
 
 DECLINLINE(int) pciVfioCfgSpaceWriteU8(PCVFIOPCIFUN pFun, uint32_t offReg, uint8_t u8)
@@ -471,6 +473,7 @@ DECLINLINE(int) pciVfioCfgSpaceWriteU32(PCVFIOPCIFUN pFun, uint32_t offReg, uint
 }
 
 
+#if 0 /* unused */
 DECLINLINE(int) pciVfioCfgSpaceWriteU64(PCVFIOPCIFUN pFun, uint32_t offReg, uint64_t u64)
 {
     ssize_t cb = pwrite(pFun->iFdVfio, &u64, 8, pFun->offPciCfg + offReg);
@@ -479,6 +482,7 @@ DECLINLINE(int) pciVfioCfgSpaceWriteU64(PCVFIOPCIFUN pFun, uint32_t offReg, uint
 
     return VINF_SUCCESS;
 }
+#endif
 
 
 /**
