@@ -1,4 +1,4 @@
-/* $Id: DevPciVfio.h 113100 2026-02-19 19:37:50Z alexander.eichner@oracle.com $ */
+/* $Id: DevPciVfio.h 113102 2026-02-20 09:11:31Z alexander.eichner@oracle.com $ */
 /** @file
  * PCI passthrough device emulation using VFIO/IOMMUFD - Header for building on too old Linux systems.
  */
@@ -171,8 +171,10 @@ struct vfio_irq_set
     uint32_t index;
     uint32_t start;
     uint32_t count;
+#if 0 /* Fails with clang, not actually accessed. */
     RT_FLEXIBLE_ARRAY_EXTENSION
     uint8_t  data[RT_FLEXIBLE_ARRAY];
+#endif
 };
 AssertCompileSize(struct vfio_irq_set, 5 * sizeof(uint32_t));
 #define VFIO_DEVICE_SET_IRQS            _IO(VFIO_TYPE, VFIO_BASE + 10)
