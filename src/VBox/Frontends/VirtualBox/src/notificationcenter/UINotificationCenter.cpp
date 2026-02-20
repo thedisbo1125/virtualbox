@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.cpp 113092 2026-02-19 15:04:45Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.cpp 113105 2026-02-20 13:58:41Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class implementation.
  */
@@ -1042,8 +1042,7 @@ void UINotificationCenter::adjustGeometry()
     iMaximumWidth = qMax(iMaximumWidth, minimumSizeHint().width());
 
     /* Calculate and propagate details width hint: */
-    int iDetailsWidthHint = iMaximumWidth;
-    iDetailsWidthHint = iDetailsWidthHint - iL - iR;
+    const int iDetailsWidthHint = iMaximumWidth - iL - iR;
     foreach (UINotificationObjectItem *pItem, m_items.values())
         pItem->setDetailsWidthHint(iDetailsWidthHint);
 
@@ -1059,7 +1058,7 @@ void UINotificationCenter::adjustGeometry()
     {
         /* Move and resize notification-center finally: */
         move(0, - iParentHeight + (double)animatedValue() / 100 * iParentHeight);
-        resize(iParentWidth, iParentHeight);
+        resize(iMaximumWidth, iParentHeight);
     }
 }
 
