@@ -1,4 +1,4 @@
-/* $Id: UINotificationCenter.cpp 113128 2026-02-23 16:04:36Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationCenter.cpp 113129 2026-02-23 16:07:59Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationCenter class implementation.
  */
@@ -1049,8 +1049,13 @@ void UINotificationCenter::adjustGeometry()
     }
     else
     {
-        /* Invent some maximum width for extended mode, parent width: */
-        iMaximumWidth = iParentWidth;
+        /* Search for maximum item's details width hint: */
+        int iItemsWidthHint = 0;
+        foreach (UINotificationObjectItem *pItem, m_items.values())
+            iItemsWidthHint = qMax(iItemsWidthHint, pItem->detailsWidthHint());
+        /* Make sure maximum width is more or equal to items width hint: */
+        iMaximumWidth = qMax(iMaximumWidth, iItemsWidthHint);
+        iMaximumWidth += iL + iR;
     }
     /* Make sure maximum width is no less than minimum one: */
     iMaximumWidth = qMax(iMaximumWidth, iMinimumWidth);
@@ -1084,7 +1089,7 @@ void UINotificationCenter::adjustGeometry()
     else
     {
         /* Move and resize notification-center finally: */
-        move(0, - iMaximumHeight + (double)animatedValue() / 100 * iMaximumHeight);
+        move(iParentWidth / 2 - iMaximumWidth / 2, - iMaximumHeight + (double)animatedValue() / 100 * iMaximumHeight);
         resize(iMaximumWidth, iMaximumHeight);
     }
 }
