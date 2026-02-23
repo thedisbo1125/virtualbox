@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 113118 2026-02-23 11:51:27Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 113119 2026-02-23 11:52:10Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -1383,7 +1383,7 @@ VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
          *       Just try sleeping here for a bit and hope that RTThreadPoke() also works.
          *       Fortunately this seems to be used very rarely.
          */
-        RTThreadSleep(100 * RT_MS_1SEC);
+        RTThreadSleep(100);
     }
     else
     {
