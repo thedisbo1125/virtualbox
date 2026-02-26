@@ -1,4 +1,4 @@
-/* $Id: UIVMActivityOverviewModelView.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVMActivityOverviewModelView.cpp 112723 2026-01-28 12:17:37Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityOverviewModelView class implementation.
  */
@@ -130,11 +130,13 @@ private:
     CGuest            m_comGuest;
 
     quint64  m_uFreeRAM;
-    quint64  m_uNetworkDownTotal;
-    quint64  m_uNetworkUpTotal;
+    quint64  m_uNetworkReceiveTotal;
+    quint64  m_uNetworkTransmitTotal;
     quint64  m_uVMExitTotal;
     quint64  m_uDiskWriteTotal;
     quint64  m_uDiskReadTotal;
+    quint64  m_uUSBWriteTotal;
+    quint64  m_uUSBReadTotal;
 };
 
 
@@ -264,11 +266,13 @@ UIVMActivityOverviewRowLocal::UIVMActivityOverviewRowLocal(QITableView *pTableVi
     : UIVMActivityOverviewRow(pTableView, uMachineId, strMachineName)
     , m_enmMachineState(enmMachineState)
     , m_uFreeRAM(0)
-    , m_uNetworkDownTotal(0)
-    , m_uNetworkUpTotal(0)
+    , m_uNetworkReceiveTotal(0)
+    , m_uNetworkTransmitTotal(0)
     , m_uVMExitTotal(0)
     , m_uDiskWriteTotal(0)
     , m_uDiskReadTotal(0)
+    , m_uUSBWriteTotal(0)
+    , m_uUSBReadTotal(0)
 {
     if (m_enmMachineState == KMachineState_Running)
         resetDebugger();
@@ -324,69 +328,90 @@ void UIVMActivityOverviewRowLocal::resetDebugger()
 void UIVMActivityOverviewRowLocal::updateCells()
 {
     /* CPU Load: */
-    ULONG aPctHalted;
-    ULONG  uCPUGuestLoad;
-    ULONG uCPUVMMLoad;
-    m_comDebugger.GetCPULoad(0x7fffffff, uCPUGuestLoad, aPctHalted, uCPUVMMLoad);
-    updateCellText(VMActivityOverviewColumn_CPUVMMLoad, QString("%1%").arg(QString::number(uCPUVMMLoad)));
-    updateCellText(VMActivityOverviewColumn_CPUGuestLoad, QString("%1%").arg(QString::number(uCPUGuestLoad)));
+    {
+        ULONG aPctHalted;
+        ULONG  uCPUGuestLoad;
+        ULONG uCPUVMMLoad;
+        m_comDebugger.GetCPULoad(0x7fffffff, uCPUGuestLoad, aPctHalted, uCPUVMMLoad);
+        updateCellText(VMActivityOverviewColumn_CPUVMMLoad, QString("%1%").arg(QString::number(uCPUVMMLoad)));
+        updateCellText(VMActivityOverviewColumn_CPUGuestLoad, QString("%1%").arg(QString::number(uCPUGuestLoad)));
+    }
 
-    /* RAM Utilization: */
-    QString strRAMUsage;
-    QString strRAMPercentage;
     int iDecimalCount = 2;
-    quint64 uUsedRAM = m_uTotalRAM - m_uFreeRAM;
-    float m_fRAMUsagePercentage = 0;
-
-    if (m_uTotalRAM != 0)
-        m_fRAMUsagePercentage = 100.f * (uUsedRAM / (float)m_uTotalRAM);
-
-    if (isWithGuestAdditions())
+    /* RAM Utilization: */
     {
-        strRAMUsage =
-            QString("%1/%2").arg(UITranslator::formatSize(_1K * uUsedRAM, iDecimalCount)).
-            arg(UITranslator::formatSize(_1K * m_uTotalRAM, iDecimalCount));
-        strRAMPercentage =
-            QString("%1%").arg(QString::number(m_fRAMUsagePercentage, 'f', 2));
-    }
-    else
-    {
-        strRAMPercentage = QApplication::translate("UIVMActivityOverviewWidget", "N/A");
-        strRAMUsage = QApplication::translate("UIVMActivityOverviewWidget", "N/A");
-    }
+        QString strRAMUsage;
+        QString strRAMPercentage;
+        quint64 uUsedRAM = m_uTotalRAM - m_uFreeRAM;
+        float m_fRAMUsagePercentage = 0;
+        if (m_uTotalRAM != 0)
+            m_fRAMUsagePercentage = 100.f * (uUsedRAM / (float)m_uTotalRAM);
 
-    updateCellText(VMActivityOverviewColumn_RAMUsedAndTotal, strRAMUsage);
-    updateCellText(VMActivityOverviewColumn_RAMUsedPercentage, strRAMPercentage);
+        if (isWithGuestAdditions())
+        {
+            strRAMUsage =
+                QString("%1/%2").arg(UITranslator::formatSize(_1K * uUsedRAM, iDecimalCount)).
+                arg(UITranslator::formatSize(_1K * m_uTotalRAM, iDecimalCount));
+            strRAMPercentage =
+                QString("%1%").arg(QString::number(m_fRAMUsagePercentage, 'f', 2));
+        }
+        else
+        {
+            strRAMPercentage = QApplication::translate("UIVMActivityOverviewWidget", "N/A");
+            strRAMUsage = QApplication::translate("UIVMActivityOverviewWidget", "N/A");
+        }
+        updateCellText(VMActivityOverviewColumn_RAMUsedAndTotal, strRAMUsage);
+        updateCellText(VMActivityOverviewColumn_RAMUsedPercentage, strRAMPercentage);
+    }
 
     /* Network rate: */
-    quint64 uPrevDownTotal = m_uNetworkDownTotal;
-    quint64 uPrevUpTotal = m_uNetworkUpTotal;
-    UIMonitorCommon::getNetworkLoad(m_comDebugger, m_uNetworkDownTotal, m_uNetworkUpTotal);
-    quint64 uNetworkDownRate = m_uNetworkDownTotal - uPrevDownTotal;
-    quint64 uNetworkUpRate = m_uNetworkUpTotal - uPrevUpTotal;
+    {
+        quint64 uPrevDownTotal = m_uNetworkReceiveTotal;
+        quint64 uPrevUpTotal = m_uNetworkTransmitTotal;
+        UIMonitorCommon::getNetworkLoad(m_comDebugger, m_uNetworkReceiveTotal, m_uNetworkTransmitTotal);
+        quint64 uNetworkReceiveRate = m_uNetworkReceiveTotal - uPrevDownTotal;
+        quint64 uNetworkTransmitRate = m_uNetworkTransmitTotal - uPrevUpTotal;
 
-    updateCellText(VMActivityOverviewColumn_NetworkUpRate, QString("%1").arg(UITranslator::formatSize(uNetworkUpRate, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_NetworkDownRate,QString("%1").arg(UITranslator::formatSize(uNetworkDownRate, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_NetworkUpTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkUpTotal, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_NetworkDownTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkDownTotal, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_NetworkTransmitRate, QString("%1").arg(UITranslator::formatSize(uNetworkTransmitRate, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_NetworkReceiveRate,QString("%1").arg(UITranslator::formatSize(uNetworkReceiveRate, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_NetworkTransmitTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkTransmitTotal, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_NetworkReceiveTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkReceiveTotal, iDecimalCount)));
+    }
 
     /* IO rate: */
-    quint64 uPrevWriteTotal = m_uDiskWriteTotal;
-    quint64 uPrevReadTotal = m_uDiskReadTotal;
-    UIMonitorCommon::getDiskLoad(m_comDebugger, m_uDiskWriteTotal, m_uDiskReadTotal);
-    quint64 uDiskWriteRate = m_uDiskWriteTotal - uPrevWriteTotal;
-    quint64 uDiskReadRate = m_uDiskReadTotal - uPrevReadTotal;
-    updateCellText(VMActivityOverviewColumn_DiskIOReadRate,QString("%1").arg(UITranslator::formatSize(uDiskReadRate, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_DiskIOWriteRate,QString("%1").arg(UITranslator::formatSize(uDiskWriteRate, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_DiskIOReadTotal,  QString("%1").arg(UITranslator::formatSize(m_uDiskReadTotal, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_DiskIOWriteTotal, QString("%1").arg(UITranslator::formatSize(m_uDiskWriteTotal, iDecimalCount)));
+    {
+        quint64 uPrevWriteTotal = m_uDiskWriteTotal;
+        quint64 uPrevReadTotal = m_uDiskReadTotal;
+        UIMonitorCommon::getDiskLoad(m_comDebugger, m_uDiskWriteTotal, m_uDiskReadTotal);
+        quint64 uDiskWriteRate = m_uDiskWriteTotal - uPrevWriteTotal;
+        quint64 uDiskReadRate = m_uDiskReadTotal - uPrevReadTotal;
+        updateCellText(VMActivityOverviewColumn_DiskIOReadRate,QString("%1").arg(UITranslator::formatSize(uDiskReadRate, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_DiskIOWriteRate,QString("%1").arg(UITranslator::formatSize(uDiskWriteRate, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_DiskIOReadTotal,  QString("%1").arg(UITranslator::formatSize(m_uDiskReadTotal, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_DiskIOWriteTotal, QString("%1").arg(UITranslator::formatSize(m_uDiskWriteTotal, iDecimalCount)));
+    }
+
+    /* USB rate: */
+    {
+        quint64 uPrevWriteTotal = m_uUSBWriteTotal;
+        quint64 uPrevReadTotal = m_uUSBReadTotal;
+        UIMonitorCommon::getUSBLoad(m_comDebugger, m_uUSBWriteTotal, m_uUSBReadTotal);
+        quint64 uUSBWriteRate = m_uUSBWriteTotal - uPrevWriteTotal;
+        quint64 uUSBReadRate = m_uUSBReadTotal - uPrevReadTotal;
+        updateCellText(VMActivityOverviewColumn_USBReadRate,QString("%1").arg(UITranslator::formatSize(uUSBReadRate, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_USBWriteRate,QString("%1").arg(UITranslator::formatSize(uUSBWriteRate, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_USBReadTotal,  QString("%1").arg(UITranslator::formatSize(m_uUSBReadTotal, iDecimalCount)));
+        updateCellText(VMActivityOverviewColumn_USBWriteTotal, QString("%1").arg(UITranslator::formatSize(m_uUSBWriteTotal, iDecimalCount)));
+    }
 
     /* VM Exits: */
-    quint64 uPrevVMExitsTotal = m_uVMExitTotal;
-    UIMonitorCommon::getVMMExitCount(m_comDebugger, m_uVMExitTotal);
-    quint64 uVMExitRate = m_uVMExitTotal - uPrevVMExitsTotal;
-    updateCellText(VMActivityOverviewColumn_VMExits, QString("%1/%2").arg(UITranslator::addMetricSuffixToNumber(uVMExitRate)).
-                   arg(UITranslator::addMetricSuffixToNumber(m_uVMExitTotal)));
+    {
+        quint64 uPrevVMExitsTotal = m_uVMExitTotal;
+        UIMonitorCommon::getVMMExitCount(m_comDebugger, m_uVMExitTotal);
+        quint64 uVMExitRate = m_uVMExitTotal - uPrevVMExitsTotal;
+        updateCellText(VMActivityOverviewColumn_VMExits, QString("%1/%2").arg(UITranslator::addMetricSuffixToNumber(uVMExitRate)).
+                    arg(UITranslator::addMetricSuffixToNumber(m_uVMExitTotal)));
+    }
 }
 
 bool UIVMActivityOverviewRowLocal::isWithGuestAdditions()
@@ -539,10 +564,10 @@ void UIVMActivityOverviewRowCloud::sltMetricDataReceived(KMetricType enmMetricTy
                         QString("%1%").arg(QString::number(data[0].toFloat(), 'f', iDecimalCount)));
     }
     else if (enmMetricType == KMetricType_NetworksBytesOut)
-        updateCellText(VMActivityOverviewColumn_NetworkUpRate,
+        updateCellText(VMActivityOverviewColumn_NetworkTransmitRate,
                        UITranslator::formatSize((quint64)data[0].toFloat(), iDecimalCount));
     else if (enmMetricType == KMetricType_NetworksBytesIn)
-        updateCellText(VMActivityOverviewColumn_NetworkDownRate,
+        updateCellText(VMActivityOverviewColumn_NetworkReceiveRate,
                        UITranslator::formatSize((quint64)data[0].toFloat(), iDecimalCount));
     else if (enmMetricType == KMetricType_DiskBytesRead)
         updateCellText(VMActivityOverviewColumn_DiskIOReadRate,

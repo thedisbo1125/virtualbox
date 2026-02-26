@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 112921 2026-02-10 13:21:34Z knut.osmundsen@oracle.com $
 ## @file
 # Sub-makefile for VBoxDTrace.
 #
@@ -118,7 +118,7 @@ if defined(VBOX_WITH_EXTPACK_VBOXDTRACE) && defined(VBOX_WITH_EXTPACK)
   VBoxDTraceCmd_DEFS.win = YY_USE_PROTOS=1 YYENABLE_NLS=0 YYLTYPE_IS_TRIVIAL=0
   VBoxDTraceCmd_SDKS = VBoxZlib
   ifn1of ($(KBUILD_TARGET), win)
-   VBoxDTraceCmd_CFLAGS = -Wno-format $(VBOX_GCC_Wno-overlength-strings) -Wno-sign-compare -Wno-strict-prototypes -Wno-missing-prototypes -Wno-missing-declarations -Wno-shadow
+   VBoxDTraceCmd_CFLAGS = -Wno-format $(VBOX_GCC_Wno-overlength-strings) -Wno-sign-compare -Wno-strict-prototypes -Wno-missing-prototypes -Wno-missing-declarations -Wno-shadow $(VBOX_GCC_Wno-misleading-indentation)
   endif
   VBoxDTraceCmd_INCS = \
   	include \

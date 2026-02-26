@@ -1,4 +1,4 @@
-# $Id: Config.kmk 112414 2026-01-12 14:59:25Z aleksey.ilyushin@oracle.com $
+# $Id: Config.kmk 113061 2026-02-17 12:12:26Z bela.lubkin@oracle.com $
 ## @file
 # The global build configuration file for VBox.
 #
@@ -549,11 +549,11 @@ endif
 # Enable the IEM arm64 interpreter.
 VBOX_WITH_IEM_TARGETING_ARM := 1
 # Enable native NEM on windows and macOS.
-if1of ($(KBUILD_TARGET), win darwin)
+if1of ($(KBUILD_TARGET), win darwin linux)
  VBOX_WITH_NATIVE_NEM = 1
 endif
 # Enable NEM fallback if the driver is not available.
-if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.amd64 darwin.arm64 linux.arm64 win.arm64)
+if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.amd64 darwin.arm64 linux.amd64 linux.arm64 win.arm64)
  VBOX_WITH_DRIVERLESS_NEM_FALLBACK = 1
 endif
 # Enable forced driverless mode by default.
@@ -629,9 +629,6 @@ endif
 VBOX_WITH_AUDIO_DEBUG = 1
 # Enables the audio endpoint detection on Windows hosts.
 VBOX_WITH_AUDIO_MMNOTIFICATION_CLIENT = 1
-# Enable PCI passthrough support.
-# (disabled with 6.1, since it's not complete/useful enough)
-VBOX_WITH_PCI_PASSTHROUGH =
 # Enable statically linked dbus support.
 if1of ($(KBUILD_TARGET), linux solaris)
  VBOX_WITH_DBUS = 1
@@ -655,9 +652,21 @@ ifdef VBOX_WITH_VMSVGA3D
  if1of ($(KBUILD_TARGET), linux)
   VBOX_WITH_DXVK = 1
  endif
+ if1of ($(KBUILD_TARGET), linux)
+  if !defined(VBOX_WITH_DXVK)
+   # Otherwise this causes black screens.
+   $(error DXVK must be enabled when VMSVGA with 3D is enabled)
+  endif
+ endif
  # Enable DXMT library for supporting VGPU10 DX on macOS
  if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), darwin.arm64)
   VBOX_WITH_DXMT = 1
+ endif
+ if1of ($(KBUILD_TARGET), darwin.arm64)
+  if !defined(VBOX_WITH_DXMT)
+   # Otherwise this causes black screens.
+   $(error DXMT must be enabled when VMSVGA with 3D is enabled)
+  endif
  endif
 endif
 # Enable video decoding in DXVK library
@@ -723,10 +732,6 @@ endif
 ifdef VBOX_WITH_EHCI
  VBOX_WITH_EHCI_IMPL = 1
 endif
-ifdef VBOX_WITH_PCI_PASSTHROUGH
- ## @bugref{9218}: Disabled awaiting conversion of the device to new PDM device style.
- #VBOX_WITH_PCI_PASSTHROUGH_IMPL = 1
-endif
 ifndef VBOX_WITHOUT_HOSTWEBCAM
  VBOX_WITH_USB_VIDEO_IMPL = 1
 endif
@@ -785,6 +790,10 @@ if1of ($(KBUILD_TARGET), linux darwin win solaris)
 endif
 # Disable keyboard HID Consumer/Desktop control keys passthrough
 # VBOX_WITHOUT_KEYBOARD_HID_CC_DC_PASSTHROUGH = 1
+# Enable VFIO based PCI passthrough
+if1of ($(KBUILD_TARGET), linux)
+ VBOX_WITH_VFIO_PCI_PASSTHROUGH = 1
+endif
 ## @}
 
 # legacy
@@ -1535,7 +1544,6 @@ endif
 ifdef VBOX_OSE
  VBOX_WITH_EXTPACK_PUEL =
  VBOX_WITH_EXTPACK_PUEL_BUILD =
- VBOX_WITH_PCI_PASSTHROUGH_IMPL =
  VBOX_WITH_OS2_ADDITIONS_BIN =
  VBOX_WITH_LIBSSH =
  # not yet
@@ -1841,7 +1849,7 @@ VBOX_TARGET_ARCHES := amd64 x86 arm64 sparc32 sparc64
 #
 ifndef VBOX_GCC_TOOL
  ifeq ($(KBUILD_TARGET),win)
-  ifeq ($(KBUILD_TARGET_ARCH),arm64)
+  if "$(KBUILD_TARGET_ARCH)" == "arm64" || defined(VBOX_USE_CLANG)
    VBOX_GCC_TOOL  := VCC143-CLANGXX
   endif
  else ifeq ($(KBUILD_TARGET),os2)
@@ -1865,7 +1873,11 @@ ifndef VBOX_GCC_TOOL
    TOOL_GXX3PLAIN_LD_SYSMOD ?= /usr/ccs/bin/ld
   endif
  else
-  VBOX_GCC_TOOL   := GXX3
+  ifdef VBOX_USE_CLANG
+   VBOX_GCC_TOOL  := CLANGXX
+  else
+   VBOX_GCC_TOOL  := GXX3
+  endif
   ifeq ($(KBUILD_TARGET_ARCH).$(KBUILD_HOST_ARCH),x86.amd64) ## @todo mixing target/host here!
    VBOX_GCC_TOOL  := GXX32
    VBOX_WITH_VBOXDRV =
@@ -3417,7 +3429,11 @@ ifndef VBOX_NOINC_DYNAMIC_CONFIG_KMK
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_msse4.1                         ?= $(call VBOX_GCC_CHECK_CC,-msse4.1,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_mavx                            ?= $(call VBOX_GCC_CHECK_CC,-mavx,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_mavx2                           ?= $(call VBOX_GCC_CHECK_CC,-mavx2,)'
+  ifdef VBOX_USE_CLANG
+	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_no-pie                          ?= $(call VBOX_GCC_CHECK_LD,--no-pie,)'
+  else
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_no-pie                          ?= $(call VBOX_GCC_CHECK_CC,-no-pie,)'
+  endif
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_fdiagnostics-show-option        ?= $(call VBOX_GCC_CHECK_CC,-fdiagnostics-show-option,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_fdiagnostics-color              ?= $(call VBOX_GCC_CHECK_CC,-fdiagnostics-color,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_fno-printf-return-value         ?= $(call VBOX_GCC_CHECK_CC,-fno-printf-return-value,)'
@@ -3469,6 +3485,8 @@ ifndef VBOX_NOINC_DYNAMIC_CONFIG_KMK
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_fcf-protection_branch           ?= $(call VBOX_GCC_CHECK_CXX,-fcf-protection=branch,)'
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_fcf-protection_check            ?= $(call VBOX_GCC_CHECK_CXX,-fcf-protection=check)'
   endif
+  # Clang ?? (not in 12).
+	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_Wno-gnu-statement-expression-from-macro-expansion ?= $(call VBOX_GCC_CHECK_CXX,-Wno-gnu-statement-expression-from-macro-expansion,)'
   ifeq ($(KBUILD_TARGET),solaris)
 	$(QUIET)$(APPEND) '$@' 'VBOX_GCC_msave-args                      ?= $(call VBOX_GCC_CHECK_CXX,-msave-args,)'
    # Detect the solaris assembler. It is used by the the 4.x gcc compilers,
@@ -3602,7 +3620,11 @@ ifndef VBOX_GCC_std
   # else if "$(VBOX_CLANG_VERSION_CXX)" vge 60000 # Most language features complete by v6. Lib stuff was less complete in v6, but hopefully acceptable for out purposes.
   #VBOX_GCC_std := -std=c++17
  else if "$(VBOX_CLANG_VERSION_CXX)" vge 50000 # darwin Xcode 5 allegedly knows what C++11 is
-  VBOX_GCC_std := -std=c++11
+  ifdef VBOX_USE_CLANG
+   VBOX_GCC_std := -std=c++17
+  else
+   VBOX_GCC_std := -std=c++11
+  endif
   # else if "$(VBOX_GCC_VERSION_CXX)" vge 70000 # Language feature P0512R0 was v8, rest v7 or earlier. Most lib stuff present in 7, complete in v12.
   #VBOX_GCC_std := -std=gnu++17
  else if "$(VBOX_GCC_VERSION_CXX)" vge 40800
@@ -4993,7 +5015,7 @@ VBOX_SET_VER_INFO_RC = $(evalcall2 VBOX_SET_VER_INFO_INTERNAL,$1,$2,$3,TemplateR
 #
 kBuildGlobalDefaults_DEBUG_NOSTAGE.win = true
 kBuildGlobalDefaults_DEBUG_NOSTAGE.os2 = true
-if1of ($(KBUILD_TARGET), darwin win)
+if1of ($(KBUILD_TARGET), darwin $(if-expr defined(VBOX_USE_CLANG),linux,) win)
  kBuildGlobalDefaults_LD_DEBUG = split
 endif
 
@@ -5086,7 +5108,7 @@ ifdef VBOX_WITH_LIBCURL
 endif
 
 SDK_VBoxLibPng                := protable network graphics (png) library for dll linking.
-SDK_VBoxLibPng_INCS           ?= $(PATH_ROOT)/src/libs/libpng-1.6.51
+SDK_VBoxLibPng_INCS           ?= $(PATH_ROOT)/src/libs/libpng-1.6.55
 SDK_VBoxLibPng_LIBS           ?= $(PATH_STAGE_LIB)/VBox-libpng$(VBOX_SUFF_LIB)
 
 # lzf
@@ -5106,7 +5128,7 @@ endif
 
 # openssl
 SDK_VBoxOpenSslStatic                        := OpenSSL - Only for VBoxRT and/or statically linked programs.
-SDK_VBoxOpenSslStatic_VBOX_DEFAULT_INCS      := $(PATH_OUT)/obj/crypto-3.4.1-headers/include
+SDK_VBoxOpenSslStatic_VBOX_DEFAULT_INCS      := $(PATH_OUT)/obj/crypto-3.4.4-headers/include
 SDK_VBoxOpenSslStatic_INCS                   ?= $(SDK_VBoxOpenSslStatic_VBOX_DEFAULT_INCS)
 SDK_VBoxOpenSslStatic_ORDERDEPS              ?= $(crypto-headers_1_TARGET)
 if   !defined(VBOX_ONLY_SDK) \
@@ -5120,7 +5142,7 @@ SDK_VBoxOpenSslStatic_LIBS                   ?= \
 	$(PATH_STAGE_LIB)/VBox-libcrypto$(VBOX_SUFF_LIB)
 
 SDK_VBoxOpenSslStatic-x86                    := OpenSSL/x86 - Only for VBoxRT and/or statically linked programs.
-SDK_VBoxOpenSslStatic-x86_VBOX_DEFAULT_INCS  := $(PATH_OUT)/obj/crypto-3.4.1-headers/include
+SDK_VBoxOpenSslStatic-x86_VBOX_DEFAULT_INCS  := $(PATH_OUT)/obj/crypto-3.4.4-headers/include
 SDK_VBoxOpenSslStatic-x86_INCS               ?= $(SDK_VBoxOpenSslStatic_VBOX_DEFAULT_INCS)
 SDK_VBoxOpenSslStatic-x86_ORDERDEPS          ?= $(crypto-headers_1_TARGET)
 if ("$(SDK_VBoxOpenSslStatic_INCS)" == "$(SDK_VBoxOpenSslStatic_VBOX_DEFAULT_INCS)")
@@ -5258,6 +5280,9 @@ SDK_VBoxLibXml2_DEFS.win      ?= WIN32 _WINDOWS _MBCS HAVE_WIN32_THREADS HAVE_CO
 SDK_VBoxZlib                  := zlib for dll linking.
 SDK_VBoxZlib_VBOX_DEFAULT_INCS := $(PATH_ROOT)/src/libs/zlib-1.3.1
 if1of ($(KBUILD_TARGET), os2 solaris win)
+ VBOX_USE_IN_TREE_ZLIB = 1
+endif
+ifdef VBOX_USE_IN_TREE_ZLIB
  SDK_VBoxZlib_INCS            ?= $(SDK_VBoxZlib_VBOX_DEFAULT_INCS)
  SDK_VBoxZlib_LATE_LIBS       ?= $(PATH_STAGE_LIB)/VBox-zlib$(VBOX_SUFF_LIB)
 else
@@ -5698,6 +5723,9 @@ ifeq ($(VBOX_LDR_FMT),elf)
    $(warning VBox: VBOX_WITH_R0_MOD_IBT_BRANCH_PROTECTION is set but gcc doesn't support branch protection)
   endif
  endif
+ ifdef VBOX_USE_CLANG
+  TEMPLATE_VBoxR0_LDFLAGS          += -Wl,-z,notext
+ endif
  ifn1of ($(KBUILD_TARGET), solaris freebsd)
   TEMPLATE_VBoxR0_LATE_LIBS         = \
   	$(VBOX_GCC_LIBGCC) # intrinsics
@@ -5999,6 +6027,7 @@ ifeq ($(KBUILD_TARGET),darwin)
   	-Werror=non-modular-include-in-framework-module \
   	$(VBOX_GCC_Wno-nullability-extension) $(VBOX_GCC_Wno-gnu-statement-expression) \
   	$(VBOX_GCC_Wno-import-preprocessor-directive-pedantic) $(VBOX_GCC_Wno-c11-extensions) \
+  	$(VBOX_GCC_Wno-deprecated-declarations) \
   	$(VBOX_GCC_R0_OPT) $(VBOX_GCC_R0_FP) -fasm-blocks -fno-strict-aliasing -stdlib=libc++
   #  if1of ($(VBOX_GCC_TOOL), CLANGXXMACHO) ## @todo check if we can safely use $(VBOX_GCC_std) @bugref{9790}, good for noexcept.
   #TEMPLATE_VBoxR0Drv_CXXFLAGS           += $(VBOX_GCC_std)
@@ -6022,10 +6051,11 @@ ifeq ($(KBUILD_TARGET),darwin)
   	-fno-exceptions -fapple-kext -fno-rtti \
   	-fmodules -fmodules-prune-interval=86400 -fmodules-prune-after=345600 -Wnon-modular-include-in-framework-module \
   	-Werror=non-modular-include-in-framework-module $(VBOX_GCC_Wno-c11-extensions) \
+  	$(VBOX_GCC_Wno-deprecated-declarations) \
   	$(VBOX_GCC_R0_OPT) $(VBOX_GCC_R0_FP) -fasm-blocks -fno-strict-aliasing
   TEMPLATE_VBoxR0Drv_CFLAGS.amd64      = -m64 -msoft-float -mno-red-zone
   TEMPLATE_VBoxR0Drv_CFLAGS.x86        = -m32 -msoft-float
-  TEMPLATE_VBoxR0Drv_CFLAGS.arm64      = -m64 -fno-sanitize=vptr -Wno-gcc-compat -Wno-gnu-statement-expression-from-macro-expansion
+  TEMPLATE_VBoxR0Drv_CFLAGS.arm64      = -m64 -fno-sanitize=vptr -Wno-gcc-compat $(VBOX_GCC_Wno-gnu-statement-expression-from-macro-expansion)
   if 1
    TEMPLATE_VBoxR0Drv_CFLAGS          += $(VBOX_GCC_WERR) -Wno-sign-conversion
    TEMPLATE_VBoxR0Drv_CXXFLAGS        += $(VBOX_GCC_WERR) -Wno-sign-conversion
@@ -6336,7 +6366,7 @@ $(foreach arch,$(VBOX_TARGET_ARCHES)\
 ,$(eval TEMPLATE_VBoxR3Exe_ASTOOL.$(KBUILD_TARGET).$(arch) := $(VBOX_ASTOOL.$(KBUILD_TARGET).$(arch))))
 $(foreach arch,$(VBOX_TARGET_ARCHES)\
 ,$(eval TEMPLATE_VBoxR3Exe_ASFLAGS.$(KBUILD_TARGET).$(arch) = $$(VBOX_ASFLAGS.$(KBUILD_TARGET).$(arch))))
-TEMPLATE_VBoxR3Exe_DEFS                = IN_RING3 $(VBOX_GC_ARCH_BITS_DEFS)
+TEMPLATE_VBoxR3Exe_DEFS                = IN_RING3
 TEMPLATE_VBoxR3Exe_DEFS.x86            = HC_ARCH_BITS=32
 TEMPLATE_VBoxR3Exe_DEFS.arm32          = HC_ARCH_BITS=32
 TEMPLATE_VBoxR3Exe_DEFS.sparc32        = HC_ARCH_BITS=32
@@ -8549,7 +8579,11 @@ ifeq ($(KBUILD_HOST),win)
 
 else
  # (gcc of some kind )
- TEMPLATE_VBoxBldProg_TOOL               = GXX3
+ ifdef VBOX_USE_CLANG
+  TEMPLATE_VBoxBldProg_TOOL             := CLANGXX
+ else
+  TEMPLATE_VBoxBldProg_TOOL             := GXX3
+ endif
  if $(VBOX_GCC_VERSION_CC) < 30400
   TEMPLATE_VBoxBldProg_DEFS             += RT_WITHOUT_PRAGMA_ONCE
  endif
@@ -8827,7 +8861,6 @@ TEMPLATE_VBoxGuestR3ExeBase_DEFS     := \
 	IN_GUEST_R3 \
 	IN_RT_R3 \
 	IN_RT_STATIC \
-	$(VBOX_GC_ARCH_BITS_DEFS) \
 	RT_NEED_NEW_AND_DELETE
 ifeq ($(KBUILD_TARGET),linux) # As few libs as possible on linux.
  TEMPLATE_VBoxGuestR3ExeBase_LATE_LIBS = pthread rt m dl
@@ -9074,20 +9107,30 @@ TEMPLATE_VBoxGuestR3XFree86Mod_EXTENDS := VBoxGuestR3ExeBase
 TEMPLATE_VBoxGuestR3XFree86Mod_SYSSUFF := .o
 TEMPLATE_VBoxGuestR3XFree86Mod_DEFS     = $(TEMPLATE_VBoxGuestR3ExeBase_DEFS) VBOX_GUESTR3XF86MOD RTMEM_NO_WRAP_TO_EF_APIS
 TEMPLATE_VBoxGuestR3XFree86Mod_CFLAGS   = $(filter-out $(VBOX_GCC_SANITIZER_FLAGS),$(TEMPLATE_VBoxGuestR3ExeBase_CFLAGS)) \
-	-fno-pie -fno-merge-constants -std=c99 -ffreestanding
+	-fno-pie $(if-expr !defined(VBOX_USE_CLANG),-fno-merge-constants,) -std=c99 -ffreestanding
 TEMPLATE_VBoxGuestR3XFree86Mod_CXXFLAGS = $(filter-out $(VBOX_GCC_SANITIZER_FLAGS),$(TEMPLATE_VBoxGuestR3ExeBase_CXXFLAGS)) \
-	-fno-pie -fno-merge-constants -ffreestanding
+	-fno-pie $(if-expr !defined(VBOX_USE_CLANG),-fno-merge-constants,) -ffreestanding
 TEMPLATE_VBoxGuestR3XFree86Mod_CFLAGS.linux             = $(VBOX_GCC_fno-stack-protector) # Remove symvers.h
 TEMPLATE_VBoxGuestR3XFree86Mod_CXXFLAGS.linux           = $(VBOX_GCC_fno-stack-protector) # Remove symvers.h
 TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.$(KBUILD_TARGET) = $(NO_SUCH_VARIABLE)
 # The GNU_HASH ELF tag is not supported by older glibc dynamic linkers.
-TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.linux            = $(subst -Wl$(COMMA),,$(VBOX_LD_hash_style_sysv))
+ifdef VBOX_USE_CLANG
+ TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.linux           = $(VBOX_LD_hash_style_sysv)
+else
+ TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.linux           = $(subst -Wl$(COMMA),,$(VBOX_LD_hash_style_sysv))
+endif
 TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.$(KBUILD_TYPE)   = $(NO_SUCH_VARIABLE)
 TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS                 := -r
 if1of ($(KBUILD_TARGET), dragonfly freebsd linux netbsd openbsd) # the gnu ld guys.
- TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.release        := -S
- TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.x86            := -m elf_i386
- TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.amd64          := -m elf_x86_64
+ ifdef VBOX_USE_CLANG
+  TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.release       := -Wl,-S
+  TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.x86           := -Wl,-m,elf_i386
+  TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.amd64         := -Wl,-m,elf_x86_64
+ else
+  TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.release       := -S
+  TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.x86           := -m elf_i386
+  TEMPLATE_VBoxGuestR3XFree86Mod_LDFLAGS.amd64         := -m elf_x86_64
+ endif
 endif
 TEMPLATE_VBoxGuestR3XFree86Mod_LATE_LIBS                   = $(VBOX_LIB_VBGL_R3_XFREE86)
 TEMPLATE_VBoxGuestR3XFree86Mod_LATE_LIBS.$(KBUILD_TYPE)    = $(NO_SUCH_VARIABLE)
@@ -9447,7 +9490,7 @@ SVN                    ?= svn$(HOSTSUFF_EXE)
 GIT                    ?= git$(HOSTSUFF_EXE)
 VBOX_SVN_REV_KMK        = $(PATH_OUT)/revision.kmk
 ifndef VBOX_SVN_REV
- VBOX_SVN_REV_CONFIG_FALLBACK := $(patsubst %:,,  $Rev: 112414 $  )
+ VBOX_SVN_REV_CONFIG_FALLBACK := $(patsubst %:,,  $Rev: 113061 $  )
  VBOX_SVN_REV_FALLBACK := $(if-expr $(VBOX_SVN_REV_CONFIG_FALLBACK) > $(VBOX_SVN_REV_VERSION_FALLBACK),$(VBOX_SVN_REV_CONFIG_FALLBACK),$(VBOX_SVN_REV_VERSION_FALLBACK))
  VBOX_SVN_DEP          := $(firstword $(wildcard $(PATH_ROOT)/.svn/wc.db $(abspath $(PATH_ROOT)/../.svn/wc.db) $(abspath $(PATH_ROOT)/../../.svn/wc.db) $(PATH_ROOT)/.svn/entries))
  VBOX_GIT_DEP          := $(firstword $(wildcard $(PATH_ROOT)/.git/config $(abspath $(PATH_ROOT)/../.git/config) $(abspath $(PATH_ROOT)/../../.git/config)))
@@ -9461,7 +9504,7 @@ ifndef VBOX_SVN_REV
  ifneq ($(VBOX_GIT_DEP),)
   #
   # VBOX_SVN_REV_CONFIG_FALLBACK is not properly populated for a git checkout,
-  # as the $Rev: 112414 $ is not expanded, so we have to set it based on the information in the repo.
+  # as the $Rev: 113061 $ is not expanded, so we have to set it based on the information in the repo.
   #
   VBOX_SVN_REV_FALLBACK := $(shell $(GIT) log -1 $(PATH_ROOT)/Config.kmk | $(SED) -e 's/^[ \t]*//' -e '/svn:sync-xref-src-repo-rev\: r/!d' -e 's/svn:sync-xref-src-repo-rev\: r*//; t a; :a q')
  endif

@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 112988 2026-02-13 09:06:23Z knut.osmundsen@oracle.com $
 ## @file
 # Sub-Makefile for the IPRT.
 #
@@ -3092,6 +3092,16 @@ VBoxRT_LDFLAGS.win             = /MANIFEST \
 	/delayload:ole32.dll \
 	/delayload:oleaut32.dll \
 	/delayload:advapi32.dll
+# We could alias symbols on linux this way:
+#ifn1of ($(KBUILD_TARGET), darwin os2 solaris win)
+# if "$(substr $(VBOX_GCC_std),-2)" >= "17"
+#  ifdef VBOX_USE_CLANG
+#   VBoxRT_LDFLAGS += -Wl,--defsym=_ZN22RTCRestBinaryParameter19setProducerCallbackEPFiPS_PvmmPmES1_m=_ZN22RTCRestBinaryParameter19setProducerCallbackEPDoFiPS_PvmmPmES1_m
+#  else
+#   VBoxRT_LDFLAGS += -Wl,--defsym=_ZN22RTCRestBinaryParameter19setProducerCallbackEPDoFiPS_PvmmPmES1_m=_ZN22RTCRestBinaryParameter19setProducerCallbackEPFiPS_PvmmPmES1_m
+#  endif
+# endif
+#endif
 
 if1of (VBoxRT, $(DLLS))
  $(call VBOX_SET_VER_INFO_DLL,VBoxRT,VirtualBox Runtime)
@@ -3175,7 +3185,7 @@ if1of ($(DLLS), VBoxRT)
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "amd64",-e "/not-amd64/d",-e "/only-amd64/d") \
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "arm64",-e "/not-arm64/d",-e "/only-arm64/d") \
 		$(if-expr defined(VBOX_WITH_R0_MODULES)     ,-e "/no-gip/d",   -e "/with-gip/d") \
-		$(if-expr "$(substr $(if-expr $(KBUILD_TARGET) != 'win',$(VBOX_GCC_std), $(VBOX_VCC_std)),-2)" >= "17" \
+		$(if-expr "$(substr $(if-expr $(KBUILD_TARGET) != 'win',$(VBOX_GCC_std),$(VBOX_VCC_std)),-2)" >= "17" \
                          && ("$(KBUILD_TARGET)" != "win" || !$(intersects RT_RELAXED_CALLBACKS_TYPES,$(DEFS))) \
 		                                            ,-e "/before-noexcept/d", -e "/after-noexcept/d") \
 		$^
@@ -3335,7 +3345,7 @@ if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), win.x86 win.amd64 linux.amd64 dar
 		$(if-expr "$(KBUILD_TARGET_ARCH)" == "arm64",-e "/not-arm64/d",-e "/only-arm64/d") \
 		$(if-expr defined(VBOX_WITH_R0_MODULES)     ,-e "/no-gip/d",   -e "/with-gip/d") \
 		$(if-expr "$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)" == "darwin.arm64",, -e "/only-darwin.arm64/d") \
-		$(if-expr "$(substr $(if-expr $(KBUILD_TARGET) != 'win',$(VBOX_GCC_std), $(VBOX_VCC_std)),-2)" >= "17" \
+		$(if-expr "$(substr $(if-expr $(KBUILD_TARGET) != 'win',$(VBOX_GCC_std),$(VBOX_VCC_std)),-2)" >= "17" \
 			,-e "/before-noexcept/d", -e "/after-noexcept/d") \
 		$(if-expr $(intersects $(KBUILD_TARGET), linux) && $(intersects $(KBUILD_TARGET_ARCH), amd64 arm64) \
 			,-e "/int64=llong/d", -e "/int64=long/d") \
@@ -3393,6 +3403,7 @@ RuntimeR3NoCrt_SOURCES  := \
 	generic/rtStrFormatKernelAddress-generic.cpp
 
 RuntimeR3NoCrt_SOURCES.x86 := \
+	common/misc/setjmp.asm \
 	common/string/memcpy.asm \
 	common/string/memchr.asm \
 	common/string/memcmp.asm \
@@ -3405,6 +3416,7 @@ RuntimeR3NoCrt_SOURCES.x86 := \
 	common/string/RTStrEnd.asm
 
 RuntimeR3NoCrt_SOURCES.amd64 := \
+	common/misc/setjmp.asm \
 	common/string/memcpy.asm \
 	common/string/memchr.asm \
 	common/string/memcmp.asm \
@@ -4128,6 +4140,11 @@ RuntimeR0Drv_SOURCES.darwin.amd64 = \
 RuntimeR0Drv_SOURCES.darwin.x86 = \
 	common/string/memchr.asm \
 	common/string/mempcpy.asm
+
+RuntimeR0Drv_SOURCES.darwin.arm64 = \
+	common/asm/ASMMemFirstNonZero-generic.cpp \
+	common/string/memchr.cpp \
+	common/string/mempcpy.cpp
 
 RuntimeR0Drv_SOURCES.os2 = \
 	common/path/RTPathFilenameUtf16.cpp \

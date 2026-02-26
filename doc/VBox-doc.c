@@ -1,4 +1,4 @@
-/* $Id: VBox-doc.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBox-doc.c 113059 2026-02-17 10:55:34Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox Top Level Documentation File.
  */
@@ -132,7 +132,6 @@
  *      - @ref pg_netadp
  *      - VBoxUSB - The USB support driver.
  *      - @ref pg_netflt
- *      - @ref pg_rawpci
  *  - Host Services.
  *      - @ref pg_hostclip
  *      - Shared Folders.

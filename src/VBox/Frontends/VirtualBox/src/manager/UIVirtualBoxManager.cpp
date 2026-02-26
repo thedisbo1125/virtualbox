@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVirtualBoxManager.cpp 113130 2026-02-23 16:10:01Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class implementation.
  */
@@ -29,6 +29,8 @@
 #include <QActionGroup>
 #include <QApplication>
 #include <QClipboard>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFile>
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -98,7 +100,7 @@
 # include "UIImageTools.h"
 # include "UIWindowMenuManager.h"
 # include "UIVersion.h"
-# include "VBoxUtils.h"
+# include "VBoxUtils-darwin.h"
 #else
 # include "UIMenuBar.h"
 #endif
@@ -618,12 +620,12 @@ bool UIVirtualBoxManager::eventFilter(QObject *pObject, QEvent *pEvent)
 {
     /* Ignore for non-active window except for FileOpen event which should be always processed: */
     if (!isActiveWindow() && pEvent->type() != QEvent::FileOpen)
-        return QMainWindowWithRestorableGeometry::eventFilter(pObject, pEvent);
+        return QIMainWindow::eventFilter(pObject, pEvent);
 
     /* Ignore for other objects: */
     if (qobject_cast<QWidget*>(pObject) &&
         qobject_cast<QWidget*>(pObject)->window() != this)
-        return QMainWindowWithRestorableGeometry::eventFilter(pObject, pEvent);
+        return QIMainWindow::eventFilter(pObject, pEvent);
 
     /* Which event do we have? */
     switch (pEvent->type())
@@ -640,7 +642,7 @@ bool UIVirtualBoxManager::eventFilter(QObject *pObject, QEvent *pEvent)
     }
 
     /* Call to base-class: */
-    return QMainWindowWithRestorableGeometry::eventFilter(pObject, pEvent);
+    return QIMainWindow::eventFilter(pObject, pEvent);
 }
 #endif /* VBOX_WS_MAC */
 
@@ -698,13 +700,13 @@ bool UIVirtualBoxManager::event(QEvent *pEvent)
             break;
     }
     /* Call to base-class: */
-    return QMainWindowWithRestorableGeometry::event(pEvent);
+    return QIMainWindow::event(pEvent);
 }
 
 void UIVirtualBoxManager::showEvent(QShowEvent *pEvent)
 {
     /* Call to base-class: */
-    QMainWindowWithRestorableGeometry::showEvent(pEvent);
+    QIMainWindow::showEvent(pEvent);
 
     /* Is polishing required? */
     if (!m_fPolished)
@@ -723,12 +725,17 @@ void UIVirtualBoxManager::polishEvent(QShowEvent *)
 
     /* Make sure user warned about inaccessible media: */
     QMetaObject::invokeMethod(this, "sltHandleMediumEnumerationFinish", Qt::QueuedConnection);
+
+#ifdef VBOX_WS_MAC
+    /* Make sure window is activated within the cocoa hierarchy: */
+    QMetaObject::invokeMethod(this, "sltDarwinForceActiveFocus", Qt::QueuedConnection);
+#endif
 }
 
 void UIVirtualBoxManager::closeEvent(QCloseEvent *pEvent)
 {
     /* Call to base-class: */
-    QMainWindowWithRestorableGeometry::closeEvent(pEvent);
+    QIMainWindow::closeEvent(pEvent);
 
     /* Quit application: */
     QApplication::quit();
@@ -747,6 +754,13 @@ void UIVirtualBoxManager::dropEvent(QDropEvent *pEvent)
     sltHandleOpenUrlCall(pEvent->mimeData()->urls());
     pEvent->acceptProposedAction();
 }
+
+#ifdef VBOX_WS_MAC
+void UIVirtualBoxManager::sltDarwinForceActiveFocus()
+{
+    darwinForceActiveFocus();
+}
+#endif /* VBOX_WS_MAC */
 
 #ifdef VBOX_WS_NIX
 void UIVirtualBoxManager::sltHandleHostScreenAvailableAreaChange()
@@ -873,6 +887,11 @@ void UIVirtualBoxManager::sltHandleOpenUrlCall(QList<QUrl> list /* = QList<QUrl>
 
 void UIVirtualBoxManager::sltCheckUSBAccesibility()
 {
+#ifdef RT_OS_LINUX
+    /* Make sure no wrong USB mounted: */
+    UICommon::checkForWrongUSBMounted();
+#endif
+
     CHost comHost = gpGlobalSession->host();
     if (!comHost.isOk())
         return;
@@ -2054,7 +2073,7 @@ void UIVirtualBoxManager::sltPerformResetMachine()
     AssertMsg(!machineNames.isEmpty(), ("This action should not be allowed!"));
 
     /* Confirm reseting VM: */
-    if (!msgCenter().confirmResetMachine(machineNames.join(", ")))
+    if (!UINotificationQuestion::confirmResetMachine(machineNames.join(", ")))
         return;
 
     /* For each selected item: */
@@ -2432,7 +2451,7 @@ void UIVirtualBoxManager::prepare()
     if (UIVersionInfo::showBetaLabel())
     {
         QPixmap betaLabel = ::betaLabel(QSize(74, darwinWindowTitleHeight(this) - 1));
-        ::darwinLabelWindow(this, &betaLabel);
+        darwinSetWindowLabel(this, &betaLabel);
     }
 #endif /* VBOX_WS_MAC */
 

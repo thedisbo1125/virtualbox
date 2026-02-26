@@ -1,4 +1,4 @@
-/* $Id: VBoxDD.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxDD.h 113056 2026-02-17 10:38:41Z alexander.eichner@oracle.com $ */
 /** @file
  * Built-in drivers & devices (part 1) header.
  */
@@ -104,9 +104,6 @@ extern const PDMDEVREG g_DeviceVirtioSCSI;
 #ifdef VBOX_WITH_EFI
 extern const PDMDEVREG g_DeviceEFI;
 #endif
-#ifdef VBOX_WITH_PCI_PASSTHROUGH_IMPL
-extern const PDMDEVREG g_DevicePciRaw;
-#endif
 extern const PDMDEVREG g_DeviceGIMDev;
 extern const PDMDEVREG g_DeviceLPC;
 #ifdef VBOX_WITH_VIRTUALKD
@@ -116,6 +113,9 @@ extern const PDMDEVREG g_DeviceQemuFwCfg;
 #ifdef VBOX_WITH_TPM
 extern const PDMDEVREG g_DeviceTpm;
 extern const PDMDEVREG g_DeviceTpmPpi;
+#endif
+#ifdef VBOX_WITH_VFIO_PCI_PASSTHROUGH
+extern const PDMDEVREG g_DevicePciVfio;
 #endif
 
 extern const PDMDRVREG g_DrvMouseQueue;
@@ -187,9 +187,6 @@ extern const PDMDRVREG g_DrvHostSerial;
 extern const PDMDRVREG g_DrvDiskIntegrity;
 extern const PDMDRVREG g_DrvRamDisk;
 #endif
-#ifdef VBOX_WITH_PCI_PASSTHROUGH_IMPL
-extern const PDMDRVREG g_DrvPciRaw;
-#endif
 
 #ifdef VBOX_WITH_USB
 extern const PDMUSBREG g_UsbDevProxy;
@@ -247,6 +244,7 @@ extern const PDMUSBREG g_UsbSCardReader;
 extern const PDMDRVREG g_DrvCardReaderReg;
 # endif
 #endif
+
 
 /* VBoxAcpi.cpp */
 int acpiPrepareDsdt(PPDMDEVINS pDevIns, void **ppvPtr, size_t *pcbDsdt);

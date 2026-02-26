@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: vbox.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+# $Id: vbox.py 112699 2026-01-26 15:19:48Z alexander.rudnev@oracle.com $
 # pylint: disable=too-many-lines
 
 """
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 112403 $"
+__version__ = "$Revision: 112699 $"
 
 # pylint: disable=unnecessary-semicolon
 

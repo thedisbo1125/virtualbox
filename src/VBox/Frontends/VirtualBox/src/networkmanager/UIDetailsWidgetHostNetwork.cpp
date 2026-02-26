@@ -1,4 +1,4 @@
-/* $Id: UIDetailsWidgetHostNetwork.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDetailsWidgetHostNetwork.cpp 113062 2026-02-17 12:37:07Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsWidgetHostNetwork class implementation.
  */
@@ -39,10 +39,9 @@
 #include "QITabWidget.h"
 #include "UIIconPool.h"
 #include "UIDetailsWidgetHostNetwork.h"
-#include "UIMessageCenter.h"
 #include "UINetworkManager.h"
 #include "UINetworkManagerUtils.h"
-#include "UINotificationCenter.h"
+#include "UINotificationMessage.h"
 #include "UITranslationEventListener.h"
 
 /* Other VBox includes: */

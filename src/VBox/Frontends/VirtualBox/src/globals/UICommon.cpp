@@ -1,4 +1,4 @@
-/* $Id: UICommon.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UICommon.cpp 113062 2026-02-17 12:37:07Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UICommon class implementation.
  */
@@ -58,7 +58,7 @@
 #include "UIMediumEnumerator.h"
 #include "UIMessageCenter.h"
 #include "UIModalWindowManager.h"
-#include "UINotificationCenter.h"
+#include "UINotificationMessage.h"
 #include "UIPopupCenter.h"
 #include "UIShortcutPool.h"
 #include "UIThreadPool.h"
@@ -690,11 +690,6 @@ void UICommon::prepare()
     UIUpdateManager::schedule();
 #endif /* VBOX_GUI_WITH_NETWORK_MANAGER */
 
-#ifdef RT_OS_LINUX
-    /* Make sure no wrong USB mounted: */
-    checkForWrongUSBMounted();
-#endif /* RT_OS_LINUX */
-
     /* Initialize font size settings: */
     m_iOriginalFontPixelSize = qApp->font().pixelSize();
     m_iOriginalFontPointSize = qApp->font().pointSize();
@@ -1262,6 +1257,35 @@ QString UICommon::findUniqueFileName(const QString &strFullFolderPath, const QSt
     return strNewName;
 }
 
+#ifdef RT_OS_LINUX
+/* static */
+void UICommon::checkForWrongUSBMounted()
+{
+    /* Make sure '/proc/mounts' exists and can be opened: */
+    QFile file("/proc/mounts");
+    if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    /* Fetch contents: */
+    QStringList contents;
+    for (;;)
+    {
+        QByteArray line = file.readLine();
+        if (line.isEmpty())
+            break;
+        contents << line;
+    }
+    /* Grep contents for usbfs presence: */
+    QStringList grep1(contents.filter("/sys/bus/usb/drivers"));
+    QStringList grep2(grep1.filter("usbfs"));
+    if (grep2.isEmpty())
+        return;
+
+    /* Show corresponding warning: */
+    UINotificationMessage::warnAboutWrongUSBMounted();
+}
+#endif /* RT_OS_LINUX */
+
 /* static */
 void UICommon::setMinimumWidthAccordingSymbolCount(QSpinBox *pSpinBox, int cCount)
 {
@@ -1651,32 +1675,3 @@ bool UICommon::isDebuggerWorker(int *piDbgCfgVar, const char *pszExtraDataName) 
 }
 
 #endif /* VBOX_WITH_DEBUGGER_GUI */
-
-#ifdef RT_OS_LINUX
-/* static */
-void UICommon::checkForWrongUSBMounted()
-{
-    /* Make sure '/proc/mounts' exists and can be opened: */
-    QFile file("/proc/mounts");
-    if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
-
-    /* Fetch contents: */
-    QStringList contents;
-    for (;;)
-    {
-        QByteArray line = file.readLine();
-        if (line.isEmpty())
-            break;
-        contents << line;
-    }
-    /* Grep contents for usbfs presence: */
-    QStringList grep1(contents.filter("/sys/bus/usb/drivers"));
-    QStringList grep2(grep1.filter("usbfs"));
-    if (grep2.isEmpty())
-        return;
-
-    /* Show corresponding warning: */
-    msgCenter().warnAboutWrongUSBMounted();
-}
-#endif /* RT_OS_LINUX */

@@ -1,4 +1,4 @@
-/* $Id: CPUMR3CpuId-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: CPUMR3CpuId-x86.cpp 113132 2026-02-23 18:18:04Z alexander.eichner@oracle.com $ */
 /** @file
  * CPUM - CPU ID part.
  */
@@ -946,7 +946,7 @@ static int cpumR3CpuIdInstallAndExplodeLeaves(PVM pVM, PCPUM pCpum, PCPUMCPUIDLE
      */
     PVMCPU const pVCpu0 = pVM->apCpusR3[0];
     AssertCompile(sizeof(pVCpu0->cpum.s.Guest.abXState) == CPUM_MAX_XSAVE_AREA_SIZE);
-    AssertLogRelReturn(   pVM->cpum.s.GuestFeatures.cbMaxExtendedState >= sizeof(X86FXSTATE)
+    AssertLogRelReturn(   pVM->cpum.s.GuestFeatures.cbMaxExtendedState >= sizeof(X86FPUSTATE)
                        && pVM->cpum.s.GuestFeatures.cbMaxExtendedState <= sizeof(pVCpu0->cpum.s.Guest.abXState),
                        VERR_CPUM_IPE_2);
     memset(&pVCpu0->cpum.s.Guest.aoffXState[0], 0xff, sizeof(pVCpu0->cpum.s.Guest.aoffXState));
@@ -1043,6 +1043,7 @@ typedef struct CPUMCPUIDCONFIG
     CPUMISAEXTCFG   enmF16c;
     CPUMISAEXTCFG   enmMcdtNo;
     CPUMISAEXTCFG   enmMonitorMitgNo;
+    CPUMISAEXTCFG   enmTsc;
 
     CPUMISAEXTCFG   enmAbm;
     CPUMISAEXTCFG   enmSse4A;
@@ -1343,7 +1344,7 @@ static int cpumR3CpuIdSanitize(PVM pVM, PCPUM pCpum, PCPUMCPUIDCONFIG pConfig)
                            | X86_CPUID_FEATURE_EDX_VME
                            | X86_CPUID_FEATURE_EDX_DE
                            | X86_CPUID_FEATURE_EDX_PSE
-                           | X86_CPUID_FEATURE_EDX_TSC
+                           | PASSTHRU_FEATURE(pConfig->enmTsc, pHstFeat->fTsc, X86_CPUID_FEATURE_EDX_TSC)
                            | X86_CPUID_FEATURE_EDX_MSR
                            //| X86_CPUID_FEATURE_EDX_PAE   - set later if configured.
                            | X86_CPUID_FEATURE_EDX_MCE
@@ -1562,7 +1563,7 @@ static int cpumR3CpuIdSanitize(PVM pVM, PCPUM pCpum, PCPUMCPUIDCONFIG pConfig)
                                | X86_CPUID_AMD_FEATURE_EDX_VME
                                | X86_CPUID_AMD_FEATURE_EDX_DE
                                | X86_CPUID_AMD_FEATURE_EDX_PSE
-                               | X86_CPUID_AMD_FEATURE_EDX_TSC
+                               | PASSTHRU_FEATURE(pConfig->enmTsc, pHstFeat->fTsc, X86_CPUID_AMD_FEATURE_EDX_TSC)
                                | X86_CPUID_AMD_FEATURE_EDX_MSR //?? this means AMD MSRs..
                                //| X86_CPUID_AMD_FEATURE_EDX_PAE    - turned on when necessary
                                //| X86_CPUID_AMD_FEATURE_EDX_MCE    - not virtualized yet.
@@ -2918,8 +2919,19 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
             /** @todo Think about enabling this later with NEM/KVM. */
             if (VM_IS_NEM_ENABLED(pVM))
             {
+#ifdef RT_OS_LINUX
+                if (   pVM->cpum.s.HostFeatures.s.enmCpuVendor == CPUMCPUVENDOR_AMD
+                    || pVM->cpum.s.HostFeatures.s.enmCpuVendor == CPUMCPUVENDOR_HYGON)
+                    LogRel(("CPUM: Warning! Nested AMD-V is considered highly experimental, use at your own risk\n"));
+                else
+                {
+                    LogRel(("CPUM: Warning! Can't turn on nested VT-x when NEM is used! (later)\n"));
+                    pConfig->fNestedHWVirt = false;
+                }
+#else
                 LogRel(("CPUM: Warning! Can't turn on nested VT-x/AMD-V when NEM is used! (later)\n"));
                 pConfig->fNestedHWVirt = false;
+#endif
             }
             else if (!fNestedPagingAndFullGuestExec)
                 return VMSetError(pVM, VERR_CPUM_INVALID_HWVIRT_CONFIG, RT_SRC_POS,
@@ -2967,6 +2979,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
                                   "|MISALNSSE"
                                   "|3DNOWPRF"
                                   "|AXMMX"
+                                  "|TSC"
                                   , "" /*pszValidNodes*/, "CPUM" /*pszWho*/, 0 /*uInstance*/);
         if (RT_FAILURE(rc))
             return rc;
@@ -3183,6 +3196,12 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
      * issues.
      */
     rc = cpumR3CpuIdReadIsaExtCfg(pVM, pIsaExts, "MonitorMitgNo", &pConfig->enmMonitorMitgNo, CPUMISAEXTCFG_ENABLED_SUPPORTED);
+    AssertLogRelRCReturn(rc, rc);
+
+    /** @cfgm{/CPUM/IsaExts/TSC, isaextcfg, true}
+     * Whether to expose the TSC instructions to the guest.
+     */
+    rc = cpumR3CpuIdReadIsaExtCfg(pVM, pIsaExts, "TSC", &pConfig->enmTsc, CPUMISAEXTCFG_ENABLED_SUPPORTED);
     AssertLogRelRCReturn(rc, rc);
 
 

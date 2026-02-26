@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindow.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineWindow.h 112785 2026-02-02 16:38:44Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindow class declaration.
  */
@@ -38,7 +38,7 @@
 #include "UIExtraDataDefs.h"
 #ifdef VBOX_WS_MAC
 # include "VBoxUtils-darwin.h"
-#endif /* VBOX_WS_MAC */
+#endif
 
 /* Forward declarations: */
 class QCloseEvent;
@@ -161,16 +161,18 @@ protected:
     virtual void prepareMenu() {}
     virtual void prepareStatusBar() {}
     virtual void prepareMachineView();
-    virtual void prepareNotificationCenter();
+    virtual void prepareNotificationCenter() {}
     virtual void prepareVisualState() {}
+    virtual void prepareOtherConnections() {}
     virtual void prepareHandlers();
     virtual void loadSettings() {}
 
     /* Cleanup helpers: */
     virtual void saveSettings() {}
     virtual void cleanupHandlers();
+    virtual void cleanupOtherConnections() {}
     virtual void cleanupVisualState() {}
-    virtual void cleanupNotificationCenter();
+    virtual void cleanupNotificationCenter() {}
     virtual void cleanupMachineView();
     virtual void cleanupStatusBar() {}
     virtual void cleanupMenu() {}

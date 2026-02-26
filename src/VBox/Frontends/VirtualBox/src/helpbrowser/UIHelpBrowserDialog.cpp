@@ -1,4 +1,4 @@
-/* $Id: UIHelpBrowserDialog.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIHelpBrowserDialog.cpp 113060 2026-02-17 12:01:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIHelpBrowserDialog class implementation.
  */
@@ -37,7 +37,7 @@
 #include "UIExtraDataManager.h"
 #include "UIHelpBrowserDialog.h"
 #include "UIHelpBrowserWidget.h"
-#include "UINotificationObjects.h"
+#include "UINotificationMessage.h"
 #include "UITranslationEventListener.h"
 #ifndef VBOX_WS_MAC
 # include "UIIconPool.h"
@@ -55,7 +55,7 @@
 QPointer<UIHelpBrowserDialog> UIHelpBrowserDialog::m_pInstance;
 
 UIHelpBrowserDialog::UIHelpBrowserDialog(QWidget *pParent, QWidget *pCenterWidget, const QString &strHelpFilePath)
-    : QIWithRestorableGeometry<QMainWindow>(pParent)
+    : QIMainWindow(pParent)
     , m_strHelpFilePath(strHelpFilePath)
     , m_pWidget(0)
     , m_pCenterWidget(pCenterWidget)
@@ -116,7 +116,7 @@ bool UIHelpBrowserDialog::event(QEvent *pEvent)
         default:
             break;
     }
-    return QIWithRestorableGeometry<QMainWindow>::event(pEvent);
+    return QIMainWindow::event(pEvent);
 }
 
 void UIHelpBrowserDialog::prepareCentralWidget()

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: vboxtestvms.py 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+# $Id: vboxtestvms.py 112958 2026-02-11 15:28:15Z serkan.bayraktar@oracle.com $
 
 """
 VirtualBox Test VMs
@@ -36,7 +36,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 112403 $"
+__version__ = "$Revision: 112958 $"
 
 # Standard Python imports.
 import copy;
@@ -125,6 +125,12 @@ g_aaNameToDetails = \
     [ 'Windows2019_64', 'Windows2019_64',        g_k64,    1,  64, ['w2k19',  'w2k19sp[0-9]', 'win2k19', 'win2k19sp[0-9]',]], # max cpus/cores??
     [ 'Windows2022_64', 'Windows2022_64',        g_k64,    1,  64, ['w2k22',  'w2k22sp[0-9]', 'win2k22', 'win2k22sp[0-9]',]], # max cpus/cores??
     [ 'Windows11_64',   'Windows11_64',          g_k64,    2,  64, ['w11', 'w11-64', 'w11sp[0-9]-64', 'win11', 'win11-64',]], # max cpus/cores??
+    [ 'Linux_64',       'Debian9_64',            g_k64,    1, 256, ['deb9[0-9]*-64', 'debian9[0-9]*-64', ]],
+    [ 'Linux_64',       'Debian10_64',           g_k64,    1, 256, ['deb10[0-9]*-64', 'debian10[0-9]*-64', ]],
+    [ 'Linux_64',       'Debian11_64',           g_k64,    1, 256, ['deb11[0-9]*-64', 'debian11[0-9]*-64', ]],
+    [ 'Linux_arm64',    'Debian11_arm64',        g_k64,    1, 256, ['deb11[0-9]*-arm64', 'debian11[0-9]*-arm64', ]],
+    [ 'Linux_64',       'Debian12_64',           g_k64,    1, 256, ['deb12[0-9]*-64', 'debian12[0-9]*-64', ]],
+    [ 'Linux_64',       'Debian13_64',           g_k64,    1, 256, ['deb13[0-9]*-64', 'debian13[0-9]*-64', ]],
     [ 'Linux',          'Debian',                g_k32,    1, 256, ['deb[0-9]*', 'debian[0-9]*', ]],
     [ 'Linux_64',       'Debian_64',             g_k64,    1, 256, ['deb[0-9]*-64', 'debian[0-9]*-64', ]],
     [ 'Linux_arm64',    'Debian_arm64',          g_k64,    1, 256, ['deb[0-9]*-arm64', 'debian[0-9]*-arm64', ]],
@@ -136,6 +142,15 @@ g_aaNameToDetails = \
     [ 'Linux_arm64',    'Oracle_arm64',          g_k64,    1, 256, ['ols[0-9]*-arm64', 'oel[0-9]*-arm64', ]],
     [ 'Linux',          'OpenSUSE',              g_k32,    1, 256, ['opensuse[0-9]*', 'suse[0-9]*', ]],
     [ 'Linux_64',       'OpenSUSE_64',           g_k64,    1, 256, ['opensuse[0-9]*-64', 'suse[0-9]*-64', ]],
+    [ 'Linux',          'Ubuntu16',              g_k32,    1, 256, ['ubuntu16[0-9]*', ]],
+    [ 'Linux_64',       'Ubuntu16_64',           g_k64,    1, 256, ['ubuntu16[0-9]*-64', ]],
+    [ 'Linux',          'Ubuntu17',              g_k32,    1, 256, ['ubuntu17[0-9]*', ]],
+    [ 'Linux_64',       'Ubuntu17_64',           g_k64,    1, 256, ['ubuntu17[0-9]*-64', ]],
+    [ 'Linux_64',       'Ubuntu18_64',           g_k64,    1, 256, ['ubuntu18[0-9]*-64', ]],
+    [ 'Linux_64',       'Ubuntu19_64',           g_k64,    1, 256, ['ubuntu19[0-9]*-64', ]],
+    [ 'Linux_64',       'Ubuntu22_64',           g_k64,    1, 256, ['ubuntu22[0-9]*-64', ]],
+    [ 'Linux_64',       'Ubuntu23_64',           g_k64,    1, 256, ['ubuntu23[0-9]*-64', ]],
+    [ 'Linux_64',       'Ubuntu24_64',           g_k64,    1, 256, ['ubuntu24[0-9]*-64', ]],
     [ 'Linux',          'Ubuntu',                g_k32,    1, 256, ['ubuntu[0-9]*', ]],
     [ 'Linux_64',       'Ubuntu_64',             g_k64,    1, 256, ['ubuntu[0-9]*-64', ]],
     [ 'Linux',          'ArchLinux',             g_k32,    1, 256, ['arch[0-9]*', ]],

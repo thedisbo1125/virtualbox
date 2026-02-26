@@ -1,4 +1,4 @@
-/* $Id: UISession.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UISession.cpp 112975 2026-02-12 15:04:16Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UISession class implementation.
  */
@@ -224,8 +224,8 @@ bool UISession::powerUp()
     if (!console().isOk() || comProgress.isNull())
     {
         if (uiCommon().showStartVMErrors())
-            msgCenter().cannotStartMachine(console(), machineName());
-        LogRel(("GUI: Aborting startup due to power up issue detected...\n"));
+            UINotificationMessage::cannotStartMachine(console(), machineName());
+        LogRel(("GUI: Aborting startup due to immediate power up issue detected...\n"));
         return false;
     }
 
@@ -271,7 +271,7 @@ bool UISession::powerUp()
     if (!comProgress.isOk() || comProgress.GetResultCode() != 0)
     {
         if (uiCommon().showStartVMErrors())
-            msgCenter().cannotStartMachine(comProgress, machineName());
+            UINotificationMessage::cannotStartMachine(comProgress, machineName());
         LogRel(("GUI: Aborting startup due to power up progress issue detected...\n"));
         return false;
     }
@@ -875,7 +875,7 @@ bool UISession::addEncryptionPassword(const QString &strId, const QString &strPa
     comConsole.AddEncryptionPassword(strId, strPassword, fClearOnSuspend);
     const bool fSuccess = comConsole.isOk();
     if (!fSuccess)
-        msgCenter().cannotAddDiskEncryptionPassword(comConsole);
+        UINotificationMessage::cannotAddDiskEncryptionPassword(comConsole);
     return fSuccess;
 }
 
@@ -2593,6 +2593,8 @@ void UISession::prepareConsoleEventHandlers()
     m_pConsoleEventhandler = new UIConsoleEventHandler(this);
 
     /* Console event connections: */
+    connect(m_pConsoleEventhandler, &UIConsoleEventHandler::sigGuestPropertyChange,
+            this, &UISession::sigGuestPropertyChange);
     connect(m_pConsoleEventhandler, &UIConsoleEventHandler::sigAdditionsChange,
             this, &UISession::sltAdditionsChange);
     connect(m_pConsoleEventhandler, &UIConsoleEventHandler::sigAudioAdapterChange,

@@ -1,4 +1,4 @@
-/* $Id: UIMachineLogic.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineLogic.cpp 113130 2026-02-23 16:10:01Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineLogic class implementation.
  */
@@ -84,7 +84,7 @@
 #include "UIVMLogViewerDialog.h"
 #include "UIVMInformationDialog.h"
 #ifdef VBOX_WS_MAC
-# include "DockIconPreview.h"
+# include "UIDockIconPreview.h"
 # include "UIExtraDataManager.h"
 #endif
 #ifdef VBOX_GUI_WITH_NETWORK_MANAGER
@@ -373,7 +373,7 @@ void UIMachineLogic::sltHandleVBoxSVCAvailabilityChange()
         return;
 
     /* Warn user about that: */
-    msgCenter().warnAboutVBoxSVCUnavailable();
+    UINotificationMessage::warnAboutVBoxSVCUnavailable();
 
     /* Power VM off: */
     LogRel(("GUI: Request to power VM off due to VBoxSVC is unavailable.\n"));
@@ -389,6 +389,10 @@ void UIMachineLogic::sltHandleMachineInitialized()
     sltAdditionsStateChanged();
     sltMouseCapabilityChanged();
     checkUnattendedLeftOvers();
+#ifdef RT_OS_LINUX
+    /* Make sure no wrong USB mounted: */
+    UICommon::checkForWrongUSBMounted();
+#endif
 }
 
 void UIMachineLogic::sltChangeVisualStateToNormal()
@@ -680,14 +684,14 @@ void UIMachineLogic::sltRuntimeError(bool fIsFatal, const QString &strErrorId, c
     }
 
     /* Should the default Warning type be overridden? */
-    MessageType enmMessageType = MessageType_Warning;
+    UINotificationMessage::NotificationType enmNotificationType = UINotificationMessage::NotificationType_Warning;
     if (fIsFatal)
-        enmMessageType = MessageType_Critical;
+        enmNotificationType = UINotificationMessage::NotificationType_Critical;
     else if (fPaused)
-        enmMessageType = MessageType_Error;
+        enmNotificationType = UINotificationMessage::NotificationType_Error;
 
     /* Show runtime error: */
-    msgCenter().showRuntimeError(enmMessageType, strErrorId, strMessage);
+    UINotificationMessage::showRuntimeError(enmNotificationType, strErrorId, strMessage);
 
     /* Postprocessing: */
     if (fIsFatal)
@@ -3066,7 +3070,7 @@ void UIMachineLogic::showBootFailureDialog()
 void UIMachineLogic::reset(bool fShowConfirmation)
 {
     if (   !fShowConfirmation
-        || msgCenter().confirmResetMachine(machineName()))
+        || UINotificationQuestion::confirmResetMachine(machineName()))
     {
         const bool fSuccess = uimachine()->reset();
         if (fSuccess)

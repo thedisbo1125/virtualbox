@@ -1,4 +1,4 @@
-/* $Id: UIWizardNewVDSizeLocationPage.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardNewVDSizeLocationPage.cpp 113062 2026-02-17 12:37:07Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardNewVDSizeLocationPage class implementation.
  */
@@ -33,7 +33,7 @@
 #include "UIWizardNewVDSizeLocationPage.h"
 #include "UIWizardNewVD.h"
 #include "UIGlobalSession.h"
-#include "UINotificationCenter.h"
+#include "UINotificationMessage.h"
 #include "UIWizardDiskEditors.h"
 
 /* COM includes: */
@@ -164,7 +164,7 @@ bool UIWizardNewVDSizeLocationPage::validatePage()
     fResult = !QFileInfo(strMediumPath).exists();
     if (!fResult)
     {
-        UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard()->notificationCenter());
+        UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard());
         return fResult;
     }
 
@@ -174,7 +174,7 @@ bool UIWizardNewVDSizeLocationPage::validatePage()
                                      pWizard->mediumSize());
     if (!fResult)
     {
-        UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard()->notificationCenter());
+        UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard());
         return fResult;
     }
 

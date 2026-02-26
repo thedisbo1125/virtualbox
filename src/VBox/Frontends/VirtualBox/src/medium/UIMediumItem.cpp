@@ -1,4 +1,4 @@
-/* $Id: UIMediumItem.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMediumItem.cpp 112908 2026-02-09 15:53:11Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMediumItem class implementation.
  */
@@ -330,7 +330,7 @@ bool UIMediumItem::releaseFrom(const QUuid &uMachineId)
         /* Save machine settings: */
         machine.SaveSettings();
         if (!machine.isOk())
-            msgCenter().cannotSaveMachineSettings(machine, treeWidget());
+            UINotificationMessage::cannotSaveMachineSettings(machine, treeWidget());
         else
             fSuccess = true;
     }
@@ -359,19 +359,18 @@ bool UIMediumItem::attachTo(const AttachmentCache &attachmentCache)
                             enmDeviceType,
                             comMedium);
     if (!comMachine.isOk())
-        msgCenter().cannotAttachDevice(comMachine,
-                                       mediumTypeToLocal(enmDeviceType),
-                                       comMedium.GetLocation(),
-                                       StorageSlot(attachmentCache.m_enmControllerBus,
-                                                   attachmentCache.m_iAttachmentPort,
-                                                   attachmentCache.m_iAttachmentDevice),
-                                       parentTree());
+        UINotificationMessage::cannotAttachDevice(comMachine,
+                                                  mediumTypeToLocal(enmDeviceType),
+                                                  comMedium.GetLocation(),
+                                                  StorageSlot(attachmentCache.m_enmControllerBus,
+                                                              attachmentCache.m_iAttachmentPort,
+                                                              attachmentCache.m_iAttachmentDevice));
     else
     {
         /* Save machine settings: */
         comMachine.SaveSettings();
         if (!comMachine.isOk())
-            msgCenter().cannotSaveMachineSettings(comMachine, parentTree());
+            UINotificationMessage::cannotSaveMachineSettings(comMachine, parentTree());
     }
 
     /* Close session: */
@@ -453,9 +452,12 @@ bool UIMediumItemHD::releaseFrom(CMachine comMachine)
         if (!comMachine.isOk())
         {
             /* Return failure: */
-            msgCenter().cannotDetachDevice(comMachine, UIMediumDeviceType_HardDisk, location(),
-                                           StorageSlot(controller.GetBus(), attachment.GetPort(), attachment.GetDevice()),
-                                           treeWidget());
+            UINotificationMessage::cannotDetachDevice(comMachine,
+                                                      UIMediumDeviceType_HardDisk,
+                                                      location(),
+                                                      StorageSlot(controller.GetBus(),
+                                                                  attachment.GetPort(),
+                                                                  attachment.GetDevice()));
             return false;
         }
         else

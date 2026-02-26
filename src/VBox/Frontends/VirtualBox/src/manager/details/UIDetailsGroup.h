@@ -1,4 +1,4 @@
-/* $Id: UIDetailsGroup.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDetailsGroup.h 112700 2026-01-26 15:25:49Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsGroup class declaration.
  */
@@ -109,9 +109,6 @@ protected:
       * @{ */
         /** Returns RTTI item type. */
         virtual int type() const RT_OVERRIDE { return Type; }
-
-        /** Returns the description of the item. */
-        virtual QString description() const RT_OVERRIDE { return QString(); }
     /** @} */
 
     /** @name Children stuff.

@@ -1,4 +1,4 @@
-/* $Id: VBoxLwipCore.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxLwipCore.cpp 112885 2026-02-09 09:34:33Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Lwip Core Initiatetor/Finilizer.
  */
@@ -26,13 +26,13 @@
  */
 
 /**
- * @todo: this should be somehow shared with with DevINIP, because
+ * @todo  this should be somehow shared with with DevINIP, because
  * we want that every NAT and DevINIP instance uses a initialized LWIP
  * initialization of LWIP should happen on iLWIPInitiatorCounter 0 -> 1.
  * see pfnConstruct/Destruct.
  *
- * @note: see comment to DevINIP.cpp:DevINIPConfigured
- * @note: perhaps initilization stuff would be better move out of NAT driver,
+ * @note  see comment to DevINIP.cpp:DevINIPConfigured
+ * @note  perhaps initilization stuff would be better move out of NAT driver,
  *  because we have to deal with attaching detaching NAT driver at runtime.
  */
 #include <iprt/types.h>

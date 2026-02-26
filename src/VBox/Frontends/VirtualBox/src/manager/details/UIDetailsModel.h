@@ -1,4 +1,4 @@
-/* $Id: UIDetailsModel.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDetailsModel.h 112668 2026-01-22 14:54:40Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsModel class declaration.
  */
@@ -47,6 +47,7 @@ class QGraphicsItem;
 class QGraphicsScene;
 class QGraphicsSceneContextMenuEvent;
 class QGraphicsView;
+class QKeyEvent;
 class UIVirtualMachineItem;
 class UIDetails;
 class UIDetailsContextMenu;
@@ -105,6 +106,11 @@ public:
 
     /** Defines virtual machine @a items for this model to reflect. */
     void setItems(const QList<UIVirtualMachineItem*> &items);
+
+    /** Defines current @a pItem. */
+    void setCurrentItem(UIDetailsItem *pItem);
+    /** Returns current-item. */
+    UIDetailsItem *currentItem() const;
 
     /** Returns the details categories. */
     const QMap<DetailsElementType, bool> &categories() const { return m_categories; }
@@ -194,6 +200,9 @@ private slots:
     /** Handles command to detach COM. */
     void sltDetachCOM();
 
+    /** Handles group build being finished. */
+    void sltHandleGroupBuildDone();
+
     /** Handles sigal about details element of certain @a enmType toggling finished, making element @a fToggled. */
     void sltToggleAnimationFinished(DetailsElementType type, bool fToggled);
 
@@ -214,6 +223,14 @@ private:
         void cleanup();
     /** @} */
 
+    /** @name Selection stuff.
+      * @{ */
+        /** Holds the current-item reference. */
+        QPointer<UIDetailsItem>  m_pCurrentItem;
+    /** @} */
+
+    /** Performs handling for allowed key @a pEvent. */
+    bool processKeyboardEvent(QKeyEvent *pEvent);
     /** Performs handling for allowed context menu @a pEvent. */
     bool processContextMenuEvent(QGraphicsSceneContextMenuEvent *pEvent);
 

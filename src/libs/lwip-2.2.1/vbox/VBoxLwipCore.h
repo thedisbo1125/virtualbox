@@ -1,4 +1,4 @@
-/* $Id: VBoxLwipCore.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxLwipCore.h 112885 2026-02-09 09:34:33Z knut.osmundsen@oracle.com $ */
 
 /** @file
  * VBox Lwip Core Initiatetor/Finilizer.
@@ -32,10 +32,7 @@
 # pragma once
 #endif
 
-/**
- * Initializes LWIP core, and do callback on tcp/ip thread.
- */
-int vboxLwipCoreInitialize(PFNRT1 pfnCallback, void * pfnCallbackArg);
-void vboxLwipCoreFinalize(PFNRT1 pfnCallback, void * pfnCallbackArg);
+int vboxLwipCoreInitialize(PFNRT1 pfnCallback, void *pvCallbackArg);
+void vboxLwipCoreFinalize(PFNRT1 pfnCallback, void *pvCallbackArg);
 
 #endif /* !VBOX_INCLUDED_SRC_vbox_VBoxLwipCore_h */

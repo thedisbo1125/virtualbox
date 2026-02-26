@@ -1,4 +1,4 @@
-/* $Id: UIApplianceExportEditorWidget.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIApplianceExportEditorWidget.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIApplianceExportEditorWidget class implementation.
  */
@@ -29,7 +29,6 @@
 #include "QITextEdit.h"
 #include "QITreeView.h"
 #include "UIApplianceExportEditorWidget.h"
-#include "UIMessageCenter.h"
 
 
 /** UIApplianceSortProxyModel subclass for Export Appliance wizard. */

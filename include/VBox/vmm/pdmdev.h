@@ -743,8 +743,8 @@ typedef PCPDMDEVREGRC                           PCPDMDEVREG;
 #if defined(VBOX_VMM_TARGET_X86) || defined(VBOX_VMM_TARGET_AGNOSTIC)
 /** The PDM APIC device registration structure. */
 extern const PDMDEVREG g_DeviceAPIC;
-# if defined(RT_OS_WINDOWS)
-/** The PDM APIC device registration structure for the Hyper-V NEM. */
+# if defined(RT_OS_WINDOWS) || defined(RT_OS_LINUX)
+/** The PDM APIC device registration structure for the Hyper-V/KVM NEM. */
 extern const PDMDEVREG g_DeviceAPICNem;
 # endif
 #elif defined(VBOX_VMM_TARGET_ARMV8)
@@ -1892,12 +1892,13 @@ typedef struct PDMIOAPICHLP
      * @param   uVector         See APIC implementation.
      * @param   u8Polarity      See APIC implementation.
      * @param   u8TriggerMode   See APIC implementation.
+     * @param   uIoApicPin      See APIC implementation.
      * @param   uTagSrc         The IRQ tag and source (for tracing).
      *
      * @sa      PDMApicBusDeliver()
      */
     DECLCALLBACKMEMBER(int, pfnApicBusDeliver,(PPDMDEVINS pDevIns, uint8_t u8Dest, uint8_t u8DestMode, uint8_t u8DeliveryMode,
-                                               uint8_t uVector, uint8_t u8Polarity, uint8_t u8TriggerMode, uint32_t uTagSrc));
+                                               uint8_t uVector, uint8_t u8Polarity, uint8_t u8TriggerMode, uint8_t uIoApicPin, uint32_t uTagSrc));
 
     /**
      * Acquires the PDM lock.
@@ -2392,7 +2393,7 @@ typedef const PDMRTCHLP *PCPDMRTCHLP;
 /** @} */
 
 /** Current PDMDEVHLPR3 version number. */
-#define PDM_DEVHLPR3_VERSION                PDM_VERSION_MAKE_PP(0xffe7, 69, 0)
+#define PDM_DEVHLPR3_VERSION                PDM_VERSION_MAKE_PP(0xffe7, 71, 0)
 
 /**
  * PDM Device API.
@@ -2643,6 +2644,29 @@ typedef struct PDMDEVHLPR3
                                               uint32_t fFlags, const char *pszDesc, void **ppvMapping, PPGMMMIO2HANDLE phRegion));
 
     /**
+     * Creates a MMIO2 region from an existing backing.
+     *
+     * @returns VBox status.
+     * @param   pDevIns             The device instance.
+     * @param   pPciDev             The PCI device the region is associated with, or
+     *                              NULL if no PCI device association.
+     * @param   iPciRegion          The region number. Use the PCI region number as
+     *                              this must be known to the PCI bus device too. If
+     *                              it's not associated with the PCI device, then
+     *                              any number up to UINT8_MAX is fine.
+     * @param   cbRegion            The size (in bytes) of the region.
+     * @param   fFlags              PGMPHYS_MMIO2_FLAGS_XXX (see pgm.h).
+     * @param   pszDesc             Pointer to description string. This must not be
+     *                              freed.
+     * @param   pvBacking           The ring-3 backing to use for the MMIO2 region.
+     * @param   phRegion            Where to return the MMIO2 region handle.
+     *
+     * @thread  EMT(0)
+     */
+    DECLR3CALLBACKMEMBER(int, pfnMmio2CreateFromExisting,(PPDMDEVINS pDevIns, PPDMPCIDEV pPciDev, uint32_t iPciRegion, RTGCPHYS cbRegion,
+                                                          uint32_t fFlags, const char *pszDesc, void *pvBacking, PPGMMMIO2HANDLE phRegion));
+
+    /**
      * Destroys a MMIO2 region, unmapping it and freeing the memory.
      *
      * Any physical access handlers registered for the region must be deregistered
@@ -2668,7 +2692,7 @@ typedef struct PDMDEVHLPR3
      *          happens to be present in the base memory that is replaced, this is
      *          technically incorrect but it's just not worth the effort to do
      *          right, at least not at this point.
-     * @sa      PDMDevHlpMmio2Unmap, PDMDevHlpMmio2Create, PDMDevHlpMmio2SetUpContext
+     * @sa      PDMDevHlpMmio2Unmap, PDMDevHlpMmio2Create, PDMDevHlpMmio2CreateFromExisting, PDMDevHlpMmio2SetUpContext
      */
     DECLR3CALLBACKMEMBER(int, pfnMmio2Map,(PPDMDEVINS pDevIns, PGMMMIO2HANDLE hRegion, RTGCPHYS GCPhys));
 
@@ -2678,7 +2702,7 @@ typedef struct PDMDEVHLPR3
      * @returns VBox status.
      * @param   pDevIns     The device instance the region is associated with.
      * @param   hRegion     The MMIO2 region handle.
-     * @sa      PDMDevHlpMmio2Map, PDMDevHlpMmio2Create, PDMDevHlpMmio2SetUpContext
+     * @sa      PDMDevHlpMmio2Map, PDMDevHlpMmio2Create, PDMDevHlpMmio2CreateFromExisting, PDMDevHlpMmio2SetUpContext
      */
     DECLR3CALLBACKMEMBER(int, pfnMmio2Unmap,(PPDMDEVINS pDevIns, PGMMMIO2HANDLE hRegion));
 
@@ -2883,6 +2907,40 @@ typedef struct PDMDEVHLPR3
     DECLR3CALLBACKMEMBER(int, pfnSSMRegisterLegacy,(PPDMDEVINS pDevIns, const char *pszOldName, PFNSSMDEVLOADPREP pfnLoadPrep,
                                                     PFNSSMDEVLOADEXEC pfnLoadExec, PFNSSMDEVLOADDONE pfnLoadDone));
 
+    /**
+     * Register a save state data unit with a different name.
+     *
+     * @returns VBox status.
+     * @param   pDevIns             The device instance.
+     * @param   pszName             The unit name.
+     * @param   uVersion            Data layout version number.
+     * @param   cbGuess             The approximate amount of data in the unit.
+     *                              Only for progress indicators.
+     * @param   pszBefore           Name of data unit which we should be put in
+     *                              front of. Optional (NULL).
+     *
+     * @param   pfnLivePrep         Prepare live save callback, optional.
+     * @param   pfnLiveExec         Execute live save callback, optional.
+     * @param   pfnLiveVote         Vote live save callback, optional.
+     *
+     * @param   pfnSavePrep         Prepare save callback, optional.
+     * @param   pfnSaveExec         Execute save callback, optional.
+     * @param   pfnSaveDone         Done save callback, optional.
+     *
+     * @param   pfnLoadPrep         Prepare load callback, optional.
+     * @param   pfnLoadExec         Execute load callback, optional.
+     * @param   pfnLoadDone         Done load callback, optional.
+     * @remarks Caller enters the device critical section prior to invoking the
+     *          registered callback methods.
+     *
+     * @note Only use this if you 100% know what you are doing!
+     */
+    DECLR3CALLBACKMEMBER(int, pfnSSMRegisterAsImposter,(PPDMDEVINS pDevIns, const char *pszName,
+                                                        uint32_t uVersion, size_t cbGuess, const char *pszBefore,
+                                                        PFNSSMDEVLIVEPREP pfnLivePrep, PFNSSMDEVLIVEEXEC pfnLiveExec, PFNSSMDEVLIVEVOTE pfnLiveVote,
+                                                        PFNSSMDEVSAVEPREP pfnSavePrep, PFNSSMDEVSAVEEXEC pfnSaveExec, PFNSSMDEVSAVEDONE pfnSaveDone,
+                                                        PFNSSMDEVLOADPREP pfnLoadPrep, PFNSSMDEVLOADEXEC pfnLoadExec, PFNSSMDEVLOADDONE pfnLoadDone));
+
     /** @name Exported SSM Functions
      * @{ */
     DECLR3CALLBACKMEMBER(int,      pfnSSMPutStruct,(PSSMHANDLE pSSM, const void *pvStruct, PCSSMFIELD paFields));
@@ -3016,6 +3074,8 @@ typedef struct PDMDEVHLPR3
     DECLR3CALLBACKMEMBER(int,      pfnTimerDestroy,(PPDMDEVINS pDevIns, TMTIMERHANDLE hTimer));
     /** @sa TMR3TimerSkip */
     DECLR3CALLBACKMEMBER(int,      pfnTimerSkipLoad,(PSSMHANDLE pSSM, bool *pfActive));
+    DECLR3CALLBACKMEMBER(int,      pfnTimerSaveFakeForSsm,(PPDMDEVINS pDevIns, PSSMHANDLE pSSM, TMCLOCK enmClock, bool fActive,
+                                                           uint64_t cTicksToNext, bool fSaveNowTsBeforeTimer));
     /** @} */
 
     /**
@@ -6832,6 +6892,15 @@ DECLINLINE(int) PDMDevHlpMmio2Create(PPDMDEVINS pDevIns, PPDMPCIDEV pPciDev, uin
 }
 
 /**
+ * @copydoc PDMDEVHLPR3::pfnMmio2CreateFromExisting
+ */
+DECLINLINE(int) PDMDevHlpMmio2CreateFromExisting(PPDMDEVINS pDevIns, PPDMPCIDEV pPciDev, uint32_t iPciRegion, RTGCPHYS cbRegion,
+                                                 uint32_t fFlags, const char *pszDesc, void *pvBacking, PPGMMMIO2HANDLE phRegion)
+{
+    return pDevIns->pHlpR3->pfnMmio2CreateFromExisting(pDevIns, pPciDev, iPciRegion, cbRegion, fFlags, pszDesc, pvBacking, phRegion);
+}
+
+/**
  * @copydoc PDMDEVHLPR3::pfnMmio2Map
  */
 DECLINLINE(int) PDMDevHlpMmio2Map(PPDMDEVINS pDevIns, PGMMMIO2HANDLE hRegion, RTGCPHYS GCPhys)
@@ -7007,6 +7076,39 @@ DECLINLINE(int) PDMDevHlpSSMRegisterLegacy(PPDMDEVINS pDevIns, const char *pszOl
                                            PFNSSMDEVLOADEXEC pfnLoadExec, PFNSSMDEVLOADDONE pfnLoadDone)
 {
     return pDevIns->pHlpR3->pfnSSMRegisterLegacy(pDevIns, pszOldName, pfnLoadPrep, pfnLoadExec, pfnLoadDone);
+}
+
+/**
+ * Register a save state data unit with a different unit name.
+ *
+ * @returns VBox status.
+ * @param   pDevIns             The device instance.
+ * @param   pszName             The saved state unit name.
+ * @param   uVersion            Data layout version number.
+ * @param   cbGuess             The approximate amount of data in the unit.
+ *                              Only for progress indicators.
+ *
+ * @param   pfnLivePrep         Prepare live save callback, optional.
+ * @param   pfnLiveExec         Execute live save callback, optional.
+ * @param   pfnLiveVote         Vote live save callback, optional.
+ *
+ * @param   pfnSavePrep         Prepare save callback, optional.
+ * @param   pfnSaveExec         Execute save callback, optional.
+ * @param   pfnSaveDone         Done save callback, optional.
+ *
+ * @param   pfnLoadPrep         Prepare load callback, optional.
+ * @param   pfnLoadExec         Execute load callback, optional.
+ * @param   pfnLoadDone         Done load callback, optional.
+ */
+DECLINLINE(int) PDMDevHlpSSMRegisterAsImposter(PPDMDEVINS pDevIns, const char *pszName, uint32_t uVersion, size_t cbGuess,
+                                               PFNSSMDEVLIVEPREP pfnLivePrep, PFNSSMDEVLIVEEXEC pfnLiveExec, PFNSSMDEVLIVEVOTE pfnLiveVote,
+                                               PFNSSMDEVSAVEPREP pfnSavePrep, PFNSSMDEVSAVEEXEC pfnSaveExec, PFNSSMDEVSAVEDONE pfnSaveDone,
+                                               PFNSSMDEVLOADPREP pfnLoadPrep, PFNSSMDEVLOADEXEC pfnLoadExec, PFNSSMDEVLOADDONE pfnLoadDone)
+{
+    return pDevIns->pHlpR3->pfnSSMRegisterAsImposter(pDevIns, pszName, uVersion, cbGuess, NULL /*pszBefore*/,
+                                                     pfnLivePrep, pfnLiveExec,  pfnLiveVote,
+                                                     pfnSavePrep, pfnSaveExec,  pfnSaveDone,
+                                                     pfnLoadPrep, pfnLoadExec,  pfnLoadDone);
 }
 
 /**
@@ -7960,6 +8062,40 @@ DECLINLINE(int) PDMDevHlpPCIIORegionCreateIo(PPDMDEVINS pDevIns, uint32_t iPciRe
 }
 
 /**
+ * Combines PDMDevHlpIoPortCreate and PDMDevHlpPCIIORegionRegisterIo, creating
+ * and registering an I/O port region for the default PCI device, extended version.
+ *
+ * @returns VBox status code.
+ * @param   pDevIns         The device instance to register the ports with.
+ * @param   pPciDev         The PCI device structure.
+ * @param   cPorts          The count of I/O ports in the region (the size).
+ * @param   iPciRegion      The PCI device region.
+ * @param   pfnOut          Pointer to function which is gonna handle OUT
+ *                          operations. Optional.
+ * @param   pfnIn           Pointer to function which is gonna handle IN operations.
+ *                          Optional.
+ * @param   pvUser          User argument to pass to the callbacks.
+ * @param   pszDesc         Pointer to description string. This must not be freed.
+ * @param   paExtDescs      Extended per-port descriptions, optional.  Partial range
+ *                          coverage is allowed.  This must not be freed.
+ * @param   phIoPorts       Where to return the I/O port range handle.
+ *
+ */
+DECLINLINE(int) PDMDevHlpPCIIORegionCreateIoEx(PPDMDEVINS pDevIns, PPDMPCIDEV pPciDev, uint32_t iPciRegion, RTIOPORT cPorts,
+                                               PFNIOMIOPORTNEWOUT pfnOut, PFNIOMIOPORTNEWIN pfnIn, void *pvUser,
+                                               const char *pszDesc, PCIOMIOPORTDESC paExtDescs, PIOMIOPORTHANDLE phIoPorts)
+
+{
+    int rc = pDevIns->pHlpR3->pfnIoPortCreateEx(pDevIns, cPorts, 0 /*fFlags*/, pPciDev, iPciRegion << 16,
+                                                pfnOut, pfnIn, NULL, NULL, pvUser, pszDesc, paExtDescs, phIoPorts);
+    if (RT_SUCCESS(rc))
+        rc = pDevIns->pHlpR3->pfnPCIIORegionRegister(pDevIns, pPciDev, iPciRegion, cPorts, PCI_ADDRESS_SPACE_IO,
+                                                     PDMPCIDEV_IORGN_F_IOPORT_HANDLE | PDMPCIDEV_IORGN_F_NEW_STYLE,
+                                                     *phIoPorts, NULL /*pfnMapUnmap*/);
+    return rc;
+}
+
+/**
  * Registers an MMIO region for the default PCI device.
  *
  * @returns VBox status code.
@@ -8097,13 +8233,75 @@ DECLINLINE(int) PDMDevHlpPCIIORegionCreateMmio2(PPDMDEVINS pDevIns, uint32_t iPc
 }
 
 /**
- * Combines PDMDevHlpMmio2Create and PDMDevHlpPCIIORegionRegisterMmio2, creating
+ * Combines PDMDevHlpMmio2CreateFromExisting and PDMDevHlpPCIIORegionRegisterMmio2, creating
  * and registering an MMIO2 region for the default PCI device.
  *
  * @returns VBox status code.
  * @param   pDevIns         The device instance to register the ports with.
  * @param   cbRegion        The size of the region in bytes.
  * @param   iPciRegion      The PCI device region.
+ * @param   enmType         PCI_ADDRESS_SPACE_MEM or
+ *                          PCI_ADDRESS_SPACE_MEM_PREFETCH, optionally or-ing in
+ *                          PCI_ADDRESS_SPACE_BAR64 or PCI_ADDRESS_SPACE_BAR32.
+ * @param   pszDesc         Pointer to description string. This must not be freed.
+ * @param   pvBacking       The ring-3 memory backing the MMIO2 region.
+ * @param   phRegion        Where to return the MMIO2 region handle.
+ *
+ */
+DECLINLINE(int) PDMDevHlpPCIIORegionCreateMmio2FromExisting(PPDMDEVINS pDevIns, uint32_t iPciRegion, RTGCPHYS cbRegion,
+                                                            PCIADDRESSSPACE enmType, const char *pszDesc,
+                                                            void *pvBacking, PPGMMMIO2HANDLE phRegion)
+
+{
+    int rc = pDevIns->pHlpR3->pfnMmio2CreateFromExisting(pDevIns, pDevIns->apPciDevs[0], iPciRegion << 16, cbRegion, 0 /*fFlags*/,
+                                                         pszDesc, pvBacking, phRegion);
+    if (RT_SUCCESS(rc))
+        rc = pDevIns->pHlpR3->pfnPCIIORegionRegister(pDevIns, pDevIns->apPciDevs[0], iPciRegion, cbRegion, enmType,
+                                                     PDMPCIDEV_IORGN_F_MMIO2_HANDLE | PDMPCIDEV_IORGN_F_NEW_STYLE,
+                                                     *phRegion, NULL /*pfnCallback*/);
+    return rc;
+}
+
+/**
+ * Combines PDMDevHlpMmio2CreateFromExisting and PDMDevHlpPCIIORegionRegisterMmio2, creating
+ * and registering an MMIO2 region for the default PCI device.
+ *
+ * @returns VBox status code.
+ * @param   pDevIns         The device instance to register the ports with.
+ * @param   pPciDev         The PCI device structure.
+ * @param   cbRegion        The size of the region in bytes.
+ * @param   iPciRegion      The PCI device region.
+ * @param   enmType         PCI_ADDRESS_SPACE_MEM or
+ *                          PCI_ADDRESS_SPACE_MEM_PREFETCH, optionally or-ing in
+ *                          PCI_ADDRESS_SPACE_BAR64 or PCI_ADDRESS_SPACE_BAR32.
+ * @param   pszDesc         Pointer to description string. This must not be freed.
+ * @param   pvBacking       The ring-3 memory backing the MMIO2 region.
+ * @param   phRegion        Where to return the MMIO2 region handle.
+ *
+ */
+DECLINLINE(int) PDMDevHlpPCIIORegionCreateMmio2FromExistingEx(PPDMDEVINS pDevIns, PPDMPCIDEV pPciDev, uint32_t iPciRegion,
+                                                              RTGCPHYS cbRegion, PCIADDRESSSPACE enmType, const char *pszDesc,
+                                                              void *pvBacking, PPGMMMIO2HANDLE phRegion)
+
+{
+    int rc = pDevIns->pHlpR3->pfnMmio2CreateFromExisting(pDevIns, pPciDev, iPciRegion << 16, cbRegion, 0 /*fFlags*/,
+                                                         pszDesc, pvBacking, phRegion);
+    if (RT_SUCCESS(rc))
+        rc = pDevIns->pHlpR3->pfnPCIIORegionRegister(pDevIns, pPciDev, iPciRegion, cbRegion, enmType,
+                                                     PDMPCIDEV_IORGN_F_MMIO2_HANDLE | PDMPCIDEV_IORGN_F_NEW_STYLE,
+                                                     *phRegion, NULL /*pfnCallback*/);
+    return rc;
+}
+
+/**
+ * Combines PDMDevHlpMmio2Create and PDMDevHlpPCIIORegionRegisterMmio2, creating
+ * and registering an MMIO2 region for the default PCI device.
+ *
+ * @returns VBox status code.
+ * @param   pDevIns         The device instance to register the ports with.
+ * @param   pPciDev         The PCI device structure.
+ * @param   iPciRegion      The PCI device region.
+ * @param   cbRegion        The size of the region in bytes.
  * @param   enmType         PCI_ADDRESS_SPACE_MEM or
  *                          PCI_ADDRESS_SPACE_MEM_PREFETCH, optionally or-ing in
  *                          PCI_ADDRESS_SPACE_BAR64 or PCI_ADDRESS_SPACE_BAR32.
@@ -8118,15 +8316,15 @@ DECLINLINE(int) PDMDevHlpPCIIORegionCreateMmio2(PPDMDEVINS pDevIns, uint32_t iPc
  * @param   phRegion        Where to return the MMIO2 region handle.
  *
  */
-DECLINLINE(int) PDMDevHlpPCIIORegionCreateMmio2Ex(PPDMDEVINS pDevIns, uint32_t iPciRegion, RTGCPHYS cbRegion,
+DECLINLINE(int) PDMDevHlpPCIIORegionCreateMmio2Ex(PPDMDEVINS pDevIns, PPDMPCIDEV pPciDev, uint32_t iPciRegion, RTGCPHYS cbRegion,
                                                   PCIADDRESSSPACE enmType, uint32_t fMmio2Flags, PFNPCIIOREGIONMAP pfnMapUnmap,
                                                   const char *pszDesc, void **ppvMapping, PPGMMMIO2HANDLE phRegion)
 
 {
-    int rc = pDevIns->pHlpR3->pfnMmio2Create(pDevIns, pDevIns->apPciDevs[0], iPciRegion << 16, cbRegion, fMmio2Flags,
+    int rc = pDevIns->pHlpR3->pfnMmio2Create(pDevIns, pPciDev, iPciRegion << 16, cbRegion, fMmio2Flags,
                                              pszDesc, ppvMapping, phRegion);
     if (RT_SUCCESS(rc))
-        rc = pDevIns->pHlpR3->pfnPCIIORegionRegister(pDevIns, pDevIns->apPciDevs[0], iPciRegion, cbRegion, enmType,
+        rc = pDevIns->pHlpR3->pfnPCIIORegionRegister(pDevIns, pPciDev, iPciRegion, cbRegion, enmType,
                                                      PDMPCIDEV_IORGN_F_MMIO2_HANDLE | PDMPCIDEV_IORGN_F_NEW_STYLE,
                                                      *phRegion, pfnMapUnmap);
     return rc;
@@ -9293,6 +9491,65 @@ DECLINLINE(int) PDMDevHlpDMAReadMemory(PPDMDEVINS pDevIns, unsigned uChannel, vo
 DECLINLINE(int) PDMDevHlpDMAWriteMemory(PPDMDEVINS pDevIns, unsigned uChannel, const void *pvBuffer, uint32_t off, uint32_t cbBlock, uint32_t *pcbWritten)
 {
     return pDevIns->pHlpR3->pfnDMAWriteMemory(pDevIns, uChannel, pvBuffer, off, cbBlock, pcbWritten);
+}
+
+/**
+ * DMA memory read, with device buffer bounds checking.
+ * Copies from system memory to device-specific buffer.
+ *
+ * @returns VBox status code.
+ * @param   pDevIns             The device instance.
+ * @param   uChannel            Channel number.
+ * @param   pvBufBase           Base of buffer memory to read.
+ * @param   offBuf              Offset into buffer.
+ * @param   cbBuf               Device buffer size.
+ * @param   offDma              DMA position.
+ * @param   cbBlock             DMA block size.
+ * @param   pcbRead             Where to store the number of bytes which was
+ *                              read, optional.
+ * @thread  EMT
+ */
+DECLINLINE(int) PDMDevHlpDMAReadMemoryEx(PPDMDEVINS pDevIns, unsigned uChannel, const void *pvBufBase, uint32_t offBuf, uint32_t cbBuf, uint32_t offDma, uint32_t cbBlock, uint32_t *pcbRead)
+{
+
+    if (RT_UNLIKELY(offBuf + cbBlock > cbBuf))
+    {
+        if (offBuf < cbBuf) /* Partial transfer. */
+            cbBlock = cbBuf - offBuf;
+        else                /* No transfer. */
+            return 0;
+    }
+    void  *pvBuffer = (uint8_t *)pvBufBase + offBuf;
+    return pDevIns->pHlpR3->pfnDMAReadMemory(pDevIns, uChannel, pvBuffer, offDma, cbBlock, pcbRead);
+}
+/**
+ * DMA memory write, with device buffer bounds checking.
+ * Copies from device-specific buffer to system memory.
+ *
+ * @returns VBox status code.
+ * @param   pDevIns             The device instance.
+ * @param   uChannel            Channel number.
+ * @param   pvBufBase           Base of buffer memory to write.
+ * @param   offBuf              Offset into buffer.
+ * @param   cbBuf               Device buffer size.
+ * @param   offDma              DMA position.
+ * @param   cbBlock             DMA block size.
+ * @param   pcbWritten          Where to store the number of bytes which was
+ *                              written, optional.
+ * @thread  EMT
+ */
+DECLINLINE(int) PDMDevHlpDMAWriteMemoryEx(PPDMDEVINS pDevIns, unsigned uChannel, const void *pvBufBase, uint32_t offBuf, uint32_t cbBuf, uint32_t offDma, uint32_t cbBlock, uint32_t *pcbWritten)
+{
+
+    if (RT_UNLIKELY(offBuf + cbBlock > cbBuf))
+    {
+        if (offBuf < cbBuf) /* Partial transfer. */
+            cbBlock = cbBuf - offBuf;
+        else                /* No transfer. */
+            return 0;
+    }
+    const void  *pvBuffer = (const uint8_t *)pvBufBase + offBuf;
+    return pDevIns->pHlpR3->pfnDMAWriteMemory(pDevIns, uChannel, pvBuffer, offDma, cbBlock, pcbWritten);
 }
 
 /**

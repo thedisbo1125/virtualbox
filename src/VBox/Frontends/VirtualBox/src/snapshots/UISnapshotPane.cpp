@@ -1,4 +1,4 @@
-/* $Id: UISnapshotPane.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UISnapshotPane.cpp 113121 2026-02-23 13:36:42Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UISnapshotPane class implementation.
  */
@@ -1758,17 +1758,8 @@ bool UISnapshotPane::deleteSnapshot(bool fAutomatically /* = false */)
     AssertReturn(!comSnapshot.isNull(), false);
 
     /* In manual mode we should ask if user really wants to remove the selected snapshot: */
-    if (!fAutomatically && !msgCenter().confirmSnapshotRemoval(comSnapshot.GetName()))
+    if (!fAutomatically && !UINotificationQuestion::confirmSnapshotRemoval(comSnapshot.GetName()))
         return false;
-
-#if 0
-    /** @todo check available space on the target filesystem etc etc. */
-    if (!msgCenter().warnAboutSnapshotRemovalFreeSpace(comSnapshot.GetName(),
-                                                       "/home/juser/.VirtualBox/Machines/SampleVM/Snapshots/{01020304-0102-0102-0102-010203040506}.vdi",
-                                                       "59 GiB",
-                                                       "15 GiB"))
-        return false;
-#endif
 
     /* Delete snapshot: */
     UINotificationProgressSnapshotDelete *pNotification = new UINotificationProgressSnapshotDelete(comMachine,

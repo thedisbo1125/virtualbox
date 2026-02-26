@@ -1,4 +1,4 @@
-/* $Id: UIDnDHandler.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDnDHandler.cpp 113062 2026-02-17 12:37:07Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDnDHandler class implementation.
  */
@@ -49,7 +49,7 @@
 #endif /* VBOX_WITH_DRAG_AND_DROP_GH */
 #include "UIMachine.h"
 #include "UIMessageCenter.h"
-#include "UINotificationCenter.h"
+#include "UINotificationMessage.h"
 #include "UISession.h"
 
 /* COM includes: */
@@ -487,7 +487,7 @@ int UIDnDHandler::dragCheckPending(ulong screenID)
     m_dataSource.defaultAction = m_dndSource.DragIsPending(screenID, vecFormats, m_dataSource.vecActions);
     if (!m_dndSource.isOk())
     {
-        msgCenter().cannotDropDataToHost(m_dndSource, m_pParent);
+        UINotificationMessage::cannotDropDataToHost(m_dndSource);
         return VERR_NO_DATA;
     }
 
@@ -787,19 +787,19 @@ int UIDnDHandler::retrieveDataInternal(      Qt::DropAction    dropAction,
                 }
                 else
                 {
-                    msgCenter().cannotDropDataToHost(m_dndSource, m_pParent);
+                    UINotificationMessage::cannotDropDataToHost(m_dndSource);
                     rc = VERR_GENERAL_FAILURE; /** @todo Fudge; do a GetResultCode() to rc translation. */
                 }
             }
             else
-                msgCenter().cannotDropDataToHost(progress, m_pParent);
+                UINotificationMessage::cannotDropDataToHost(progress);
         }
         else /* Don't pop up a message. */
             rc = VERR_CANCELLED;
     }
     else
     {
-        msgCenter().cannotDropDataToHost(m_dndSource, m_pParent);
+        UINotificationMessage::cannotDropDataToHost(m_dndSource);
         rc = VERR_GENERAL_FAILURE; /** @todo Fudge; do a GetResultCode() to rc translation. */
     }
 

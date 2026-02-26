@@ -1,4 +1,4 @@
-/* $Id: TMR3.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: TMR3.cpp 112819 2026-02-04 14:42:49Z alexander.eichner@oracle.com $ */
 /** @file
  * TM - Time Manager.
  */
@@ -224,21 +224,21 @@ VMM_INT_DECL(int) TMR3Init(PVM pVM)
     /*
      * Init the structure.
      */
-#if defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_OS_WINDOWS)
-    /*
-     * Workaround for Hyper-V on Windows/ARM:
-     *     On Windows/ARM EMTs of APs are waiting in Hyper-V because
-     *     there is no way currently to get notified of PSCI calls to turn them
-     *     on.
-     *     However because they are suspended they can't handle timers, so
-     *     this needs to be done by the boot processor.
-     *     We hope that Microsoft lifts this restriction in the future, allowing us
-     *     to use our already existing wait infrastructure for EMTs.
-     */
-    pVM->tm.s.idTimerCpu = 0;
-#else
-    pVM->tm.s.idTimerCpu = pVM->cCpus - 1; /* The last CPU. */
+#if defined(VBOX_WITH_NATIVE_NEM)
+    if (NEMR3NeedSpecialWaitMethod(pVM))
+    {
+         /*
+          * Workaround for when NEM is used and requires the VMHALTMETHOD_NEM method
+          * which lets the host hypervisor manage the EMT waiting states.
+          * This usually means that any AP is suspended until it is brought online so it
+          * can't handle any timers.
+          * The BSP is always executing so timers need to be handled there.
+          */
+        pVM->tm.s.idTimerCpu = 0;
+    }
+    else
 #endif
+        pVM->tm.s.idTimerCpu = pVM->cCpus - 1; /* The last CPU. */
 
     int rc = PDMR3CritSectInit(pVM, &pVM->tm.s.VirtualSyncLock, RT_SRC_POS, "TM VirtualSync Lock");
     AssertLogRelRCReturn(rc, rc);
@@ -3152,6 +3152,54 @@ VMMR3DECL(int) TMR3TimerSkip(PSSMHANDLE pSSM, bool *pfActive)
     }
 
     return rc;
+}
+
+
+/**
+ * Fakes a timer in the saved state.
+ *
+ * @returns VBox status.
+ * @param   pVM                   The cross context VM structure.
+ * @param   pSSM                  Save State Manager handle.
+ * @param   enmClock              The clock type to fake this saved state entry for.
+ * @param   fActive               Flag to indicate whether the timer was active/stopped
+ *                                when the state is saved.
+ * @param   cTicksToNext          The number of ticks passed to a hypothetical call to TMTimerSetRelative(),
+ *                                only relevant when the timer is marked as active.
+ * @param   fSaveNowTsBeforeTimer Flag whether to save the timestamp returned in pu64Now at the time of
+ *                                a call to TMTimerSetRelative() before the actual timer state.
+ *                                This is a specific hack for the APIC saved state code in order to be able to
+ *                                keep saved state compatibility.
+ *
+ * @note Use only when you absolutely have to keep saved state compatibility for whatever reason
+ *       and make sure the data is correct.
+ */
+VMMR3DECL(int) TMR3TimerSaveFakeForSsm(PVMCC pVM, PSSMHANDLE pSSM, TMCLOCK enmClock, bool fActive, uint64_t cTicksToNext,
+                                       bool fSaveNowTsBeforeTimer)
+{
+    switch (enmClock)
+    {
+        case TMCLOCK_VIRTUAL_SYNC:
+        {
+            /** @todo The handling of the now timestamp is not correct as it doesn't reflect
+             *        the timestamp when a timer was actually started but is something we can't
+             *        (or the caller) can get at this point. Lets hope this doesn't trip up guests too much
+             *        during a restore because the timer got dragged out for too long. This should mainly
+             *        affect long timer intervals.
+             */
+            uint64_t u64Now = TMVirtualSyncGetNoCheck(pVM);
+            if (fSaveNowTsBeforeTimer)
+                SSMR3PutU64(pSSM, u64Now);
+            SSMR3PutU8(pSSM, fActive ? TMTIMERSTATE_SAVED_PENDING_SCHEDULE : TMTIMERSTATE_SAVED_PENDING_STOP);
+            if (fActive)
+                SSMR3PutU64(pSSM, u64Now + cTicksToNext);
+            break;
+        }
+        default:
+            AssertMsgFailedReturn(("You have the honor to implement the missing timer type!\n"), VERR_NOT_SUPPORTED);
+    }
+
+    return SSMR3HandleGetStatus(pSSM);
 }
 
 

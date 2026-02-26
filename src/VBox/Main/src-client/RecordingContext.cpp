@@ -1,4 +1,4 @@
-/* $Id: RecordingContext.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: RecordingContext.cpp 113106 2026-02-20 15:14:14Z andreas.loeffler@oracle.com $ */
 /** @file
  * Recording context code.
  *
@@ -983,10 +983,16 @@ int RecordingContextImpl::createInternal(ComPtr<IProgress> &ProgressOut)
     AssertComRCReturn(hrc, VERR_RECORDING_INIT_FAILED);
 
 #ifdef VBOX_WITH_AUDIO_RECORDING
-    /* We always use the audio settings from screen 0, as we multiplex the audio data anyway. */
-    vrc = audioInit(RecScreens[0]);
-    if (RT_FAILURE(vrc))
-        return vrc;
+    BOOL fEnableAudio;
+    hrc = RecScreens[0]->IsFeatureEnabled(RecordingFeature_Audio, &fEnableAudio);
+    AssertComRCReturn(hrc, VERR_RECORDING_INIT_FAILED);
+    if (fEnableAudio)
+    {
+        /* We always use the audio settings from screen 0, as we multiplex the audio data anyway. */
+        vrc = audioInit(RecScreens[0]);
+        if (RT_FAILURE(vrc))
+            return vrc;
+    }
 #endif
 
     for (size_t i = 0; i < RecScreens.size(); i++)

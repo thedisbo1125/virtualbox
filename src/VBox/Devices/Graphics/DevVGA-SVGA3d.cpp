@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA3d.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA-SVGA3d.cpp 112586 2026-01-14 23:38:37Z vitali.pelenjow@oracle.com $ */
 /** @file
  * DevSVGA3d - VMWare SVGA device, 3D parts - Common core code.
  */
@@ -108,6 +108,9 @@ int vmsvga3dSurfaceDefine(PVGASTATECC pThisCC, uint32_t sid, SVGA3dSurfaceAllFla
 
     ASSERT_GUEST_RETURN(sid < SVGA3D_MAX_SURFACE_IDS, VERR_INVALID_PARAMETER);
     ASSERT_GUEST_RETURN(numMipLevels >= 1 && numMipLevels <= SVGA3D_MAX_MIP_LEVELS, VERR_INVALID_PARAMETER);
+    ASSERT_GUEST_RETURN(pMipLevel0Size->width > 0, VERR_INVALID_PARAMETER);
+    ASSERT_GUEST_RETURN(pMipLevel0Size->height > 0, VERR_INVALID_PARAMETER);
+    ASSERT_GUEST_RETURN(pMipLevel0Size->depth > 0, VERR_INVALID_PARAMETER);
     ASSERT_GUEST_RETURN(arraySize <= SVGA3D_MAX_SURFACE_ARRAYSIZE, VERR_INVALID_PARAMETER);
 
     if (sid >= pState->cSurfaces)
@@ -1174,7 +1177,11 @@ static int vmsvga3dScreenUpdate(PVGASTATECC pThisCC, VMSVGASCREENOBJECT *pScreen
 
         uint32_t const cbDst = pScreen->cHeight * pScreen->cbPitch;
         uint8_t *pu8Dst;
+#ifndef PERMANENT_SCREEN_BITMAP
         if (pScreen->pvScreenBitmap)
+#else
+        if (pScreen->offVRAM == VMSVGA_VRAM_OFFSET_SCREEN_TARGET)
+#endif
             pu8Dst = (uint8_t *)pScreen->pvScreenBitmap;
         else
             pu8Dst = (uint8_t *)pThisCC->pbVRam + pScreen->offVRAM;
@@ -1808,7 +1815,6 @@ int vmsvga3dSurfaceMap(PVGASTATECC pThisCC, SVGA3dSurfaceImageId const *pImage, 
     {
         clipBox = *pBox;
         vmsvgaR3ClipBox(&pMipLevel->mipmapSize, &clipBox);
-        ASSERT_GUEST_RETURN(clipBox.w && clipBox.h && clipBox.d, VERR_INVALID_PARAMETER);
     }
     else
     {
@@ -1819,6 +1825,7 @@ int vmsvga3dSurfaceMap(PVGASTATECC pThisCC, SVGA3dSurfaceImageId const *pImage, 
         clipBox.h = pMipLevel->mipmapSize.height;
         clipBox.d = pMipLevel->mipmapSize.depth;
     }
+    ASSERT_GUEST_RETURN(clipBox.w && clipBox.h && clipBox.d, VERR_INVALID_PARAMETER);
 
     /// @todo Zero the box?
     //if (enmMapType == VMSVGA3D_SURFACE_MAP_WRITE_DISCARD)
@@ -1966,7 +1973,6 @@ int vmsvga3dGetBoxDimensions(PVGASTATECC pThisCC, SVGA3dSurfaceImageId const *pI
     {
         clipBox = *pBox;
         vmsvgaR3ClipBox(&pMipLevel->mipmapSize, &clipBox);
-        ASSERT_GUEST_RETURN(clipBox.w && clipBox.h && clipBox.d, VERR_INVALID_PARAMETER);
     }
     else
     {
@@ -1977,6 +1983,7 @@ int vmsvga3dGetBoxDimensions(PVGASTATECC pThisCC, SVGA3dSurfaceImageId const *pI
         clipBox.h = pMipLevel->mipmapSize.height;
         clipBox.d = pMipLevel->mipmapSize.depth;
     }
+    ASSERT_GUEST_RETURN(clipBox.w && clipBox.h && clipBox.d, VERR_INVALID_PARAMETER);
 
     uint32_t const cBlocksX = (clipBox.w + pSurface->cxBlock - 1) / pSurface->cxBlock;
     uint32_t const cBlocksY = (clipBox.h + pSurface->cyBlock - 1) / pSurface->cyBlock;

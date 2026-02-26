@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVirtualBoxManager.h 112957 2026-02-11 15:18:35Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class declaration.
  */
@@ -32,12 +32,11 @@
 #endif
 
 /* Qt includes: */
-#include <QMainWindow>
 #include <QUrl>
 #include <QUuid>
 
 /* GUI includes: */
-#include "QIWithRestorableGeometry.h"
+#include "QIMainWindow.h"
 #include "UIAdvancedSettingsDialog.h"
 #include "UICloudMachineSettingsDialog.h"
 #include "UIDefs.h"
@@ -56,11 +55,8 @@ class UIVirtualMachineItem;
 class CCloudMachine;
 class CUnattended;
 
-/* Type definitions: */
-typedef QIWithRestorableGeometry<QMainWindow> QMainWindowWithRestorableGeometry;
-
-/** Singleton QMainWindow extension used as VirtualBox Manager instance. */
-class UIVirtualBoxManager : public QMainWindowWithRestorableGeometry
+/** Singleton QIMainWindow extension used as VirtualBox Manager instance. */
+class UIVirtualBoxManager : public QIMainWindow
 {
     Q_OBJECT;
 
@@ -122,6 +118,11 @@ private slots:
 
     /** @name Common stuff.
       * @{ */
+#ifdef VBOX_WS_MAC
+        /** Makes sure window is activated within the cocoa hierarchy. */
+        void sltDarwinForceActiveFocus();
+#endif
+
 #ifdef VBOX_WS_NIX
         /** Handles host-screen available-area change. */
         void sltHandleHostScreenAvailableAreaChange();
@@ -139,7 +140,7 @@ private slots:
         /** Handles call to open a @a list of URLs. */
         void sltHandleOpenUrlCall(QList<QUrl> list = QList<QUrl>());
 
-        /** Checks if USB device list can be enumerated and host produces any warning during enumeration. */
+        /** Checks various USB stuff. */
         void sltCheckUSBAccesibility();
 
         /** Handles signal about Chooser-pane selection change.  */

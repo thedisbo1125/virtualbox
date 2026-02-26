@@ -1,4 +1,4 @@
-/* $Id: UIWizardExportAppPageExpert.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardExportAppPageExpert.cpp 113062 2026-02-17 12:37:07Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardExportAppPageExpert class implementation.
  */
@@ -50,7 +50,7 @@
 #include "UIFormEditorWidget.h"
 #include "UIIconPool.h"
 #include "UIMessageCenter.h"
-#include "UINotificationCenter.h"
+#include "UINotificationMessage.h"
 #include "UIToolBox.h"
 #include "UIVirtualBoxEventHandler.h"
 #include "UIVirtualBoxManager.h"
@@ -630,7 +630,7 @@ bool UIWizardExportAppPageExpert::validatePage()
             comForm.GetVirtualSystemDescription();
             fResult = comForm.isOk();
             if (!fResult)
-                UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(comForm, wizard()->notificationCenter());
+                UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(comForm, wizard());
         }
 
         /* Final stage? */

@@ -1,4 +1,4 @@
-﻿/* $Id: UIAdvancedSettingsDialog.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+﻿/* $Id: UIAdvancedSettingsDialog.cpp 112954 2026-02-11 14:42:55Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIAdvancedSettingsDialog class implementation.
  */
@@ -64,6 +64,7 @@
 #include "UILoggingDefs.h"
 #include "UIMessageCenter.h"
 #include "UIModalWindowManager.h"
+#include "UINotificationCenter.h"
 #include "UIPopupCenter.h"
 #include "UISettingsPage.h"
 #include "UISettingsPageValidator.h"
@@ -72,9 +73,6 @@
 #include "UISettingsWarningPane.h"
 #include "UIShortcutPool.h"
 #include "UITranslationEventListener.h"
-#ifdef VBOX_WS_MAC
-# include "VBoxUtils.h"
-#endif
 
 
 /** QCheckBox subclass used as mode checkbox. */
@@ -831,6 +829,7 @@ UIAdvancedSettingsDialog::UIAdvancedSettingsDialog(QWidget *pParent,
     , m_pScrollArea(0)
     , m_pScrollViewport(0)
     , m_pButtonBox(0)
+    , m_pNotificationCenter(0)
 {
     prepare();
 }
@@ -1232,6 +1231,9 @@ void UIAdvancedSettingsDialog::addItem(const QString &strBigIcon,
                                        UISettingsPage *pSettingsPage /* = 0 */,
                                        int iParentId /* = -1 */)
 {
+    /* Assign parent dialog: */
+    pSettingsPage->setParentDialog(this);
+
     /* Init m_iPageId if we haven't yet: */
     if (m_iPageId == MachineSettingsPageType_Invalid)
         m_iPageId = cId;
@@ -1474,6 +1476,14 @@ void UIAdvancedSettingsDialog::sltUpdateDisabledWidgetsLookAndFeel()
 
 void UIAdvancedSettingsDialog::prepare()
 {
+    /* Prepare local notification-center (parent to be assigned in the end): */
+    m_pNotificationCenter = new UINotificationCenter(0);
+    if (m_pNotificationCenter)
+    {
+        QPointer<UINotificationCenter> target = m_pNotificationCenter;
+        setProperty("notification_center", QVariant::fromValue(target));
+    }
+
     /* Create timer to update disabled widgets look&feel: */
     m_pTimerDisabledLookAndFeel = new QTimer(this);
     if (m_pTimerDisabledLookAndFeel)
@@ -1498,6 +1508,9 @@ void UIAdvancedSettingsDialog::prepare()
             prepareButtonBox();
         }
     }
+
+    /* Assign notification-center parent (after everything else is done): */
+    m_pNotificationCenter->setParent(this);
 
     /* Apply language settings: */
     sltRetranslateUI();
@@ -1640,6 +1653,10 @@ void UIAdvancedSettingsDialog::cleanup()
 
     /* Delete selector early! */
     delete m_pSelector;
+
+    /* Cleanup local notification-center: */
+    delete m_pNotificationCenter;
+    m_pNotificationCenter = 0;
 }
 
 void UIAdvancedSettingsDialog::tellListenerToCloseUs()

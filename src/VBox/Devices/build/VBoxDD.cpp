@@ -1,4 +1,4 @@
-/* $Id: VBoxDD.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxDD.cpp 113056 2026-02-17 10:38:41Z alexander.eichner@oracle.com $ */
 /** @file
  * VBoxDD - Built-in drivers & devices (part 1).
  */
@@ -213,11 +213,6 @@ extern "C" DECLEXPORT(int) VBoxDevicesRegister(PPDMDEVREGCB pCallbacks, uint32_t
     if (RT_FAILURE(rc))
         return rc;
 #endif
-#ifdef VBOX_WITH_PCI_PASSTHROUGH_IMPL
-    rc = pCallbacks->pfnRegister(pCallbacks, &g_DevicePciRaw);
-    if (RT_FAILURE(rc))
-        return rc;
-#endif
     rc = pCallbacks->pfnRegister(pCallbacks, &g_DeviceGIMDev);
     if (RT_FAILURE(rc))
         return rc;
@@ -248,6 +243,11 @@ extern "C" DECLEXPORT(int) VBoxDevicesRegister(PPDMDEVREGCB pCallbacks, uint32_t
         return rc;
 
     rc = pCallbacks->pfnRegister(pCallbacks, &g_DeviceTpmPpi);
+    if (RT_FAILURE(rc))
+        return rc;
+#endif
+#ifdef VBOX_WITH_VFIO_PCI_PASSTHROUGH
+    rc = pCallbacks->pfnRegister(pCallbacks, &g_DevicePciVfio);
     if (RT_FAILURE(rc))
         return rc;
 #endif
@@ -455,11 +455,6 @@ extern "C" DECLEXPORT(int) VBoxDriversRegister(PCPDMDRVREGCB pCallbacks, uint32_
         return rc;
 
     rc = pCallbacks->pfnRegister(pCallbacks, &g_DrvRamDisk);
-    if (RT_FAILURE(rc))
-        return rc;
-#endif
-#ifdef VBOX_WITH_PCI_PASSTHROUGH_IMPL
-    rc = pCallbacks->pfnRegister(pCallbacks, &g_DrvPciRaw);
     if (RT_FAILURE(rc))
         return rc;
 #endif

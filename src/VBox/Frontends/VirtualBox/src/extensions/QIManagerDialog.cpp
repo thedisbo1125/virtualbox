@@ -1,4 +1,4 @@
-/* $Id: QIManagerDialog.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: QIManagerDialog.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QIManagerDialog class implementation.
  */
@@ -27,6 +27,7 @@
 
 /* Qt includes: */
 #include <QApplication>
+#include <QCloseEvent>
 #include <QMenuBar>
 #include <QPushButton>
 #include <QStyle>
@@ -38,12 +39,14 @@
 #include "UICommon.h"
 #include "UIDesktopWidgetWatchdog.h"
 #include "UIHelpBrowserDialog.h"
-#include "UIMessageCenter.h"
 #include "UIShortcutPool.h"
 #ifdef VBOX_WS_MAC
 # include "QIToolBar.h"
 # include "UIWindowMenuManager.h"
 #endif
+
+/* Other VBox includes: */
+#include "iprt/assert.h"
 
 
 /*********************************************************************************************************************************

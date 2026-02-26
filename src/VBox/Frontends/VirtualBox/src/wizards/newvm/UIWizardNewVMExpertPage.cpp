@@ -1,4 +1,4 @@
-/* $Id: UIWizardNewVMExpertPage.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardNewVMExpertPage.cpp 113062 2026-02-17 12:37:07Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardNewVMExpertPage class implementation.
  */
@@ -41,7 +41,7 @@
 #include "UIMediumEnumerator.h"
 #include "UIMediumSelector.h"
 #include "UINameAndSystemEditor.h"
-#include "UINotificationCenter.h"
+#include "UINotificationMessage.h"
 #include "UIToolBox.h"
 #include "UIWizardNewVM.h"
 #include "UIWizardDiskEditors.h"
@@ -218,6 +218,10 @@ void UIWizardNewVMExpertPage::sltGAISOPathChanged(const QString &strPath)
 {
     AssertReturnVoid(wizardWindow<UIWizardNewVM>());
     m_userModifiedParameters << "GuestAdditionsISOPath";
+    /* Update the global recent ISO path: */
+    QFileInfo fileInfo(strPath);
+    if (fileInfo.exists() && fileInfo.isReadable())
+        gpMediumEnumerator->updateRecentlyUsedMediumListAndFolder(UIMediumDeviceType_DVD, strPath);
     wizardWindow<UIWizardNewVM>()->setGuestAdditionsISOPath(strPath);
     emit completeChanged();
 }
@@ -722,7 +726,7 @@ bool UIWizardNewVMExpertPage::validatePage()
         fResult = !QFileInfo(strMediumPath).exists();
         if (!fResult)
         {
-            UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard()->notificationCenter());
+            UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard());
             return fResult;
         }
         qulonglong uSize = pWizard->mediumSize();
@@ -731,7 +735,7 @@ bool UIWizardNewVMExpertPage::validatePage()
         fResult =  UIWizardDiskEditors::checkFATSizeLimitation(uVariant, strMediumPath, uSize);
         if (!fResult)
         {
-            UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard()->notificationCenter());
+            UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard());
             return fResult;
         }
         /* Try to create the hard drive:*/

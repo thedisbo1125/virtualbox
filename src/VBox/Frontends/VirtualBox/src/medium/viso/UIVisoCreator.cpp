@@ -1,4 +1,4 @@
-/* $Id: UIVisoCreator.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVisoCreator.cpp 112901 2026-02-09 14:34:18Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVisoCreator classes implementation.
  */
@@ -57,13 +57,11 @@
 #include "UITranslationEventListener.h"
 #include "UIVisoCreator.h"
 #include "UIVisoContentBrowser.h"
-#ifdef VBOX_WS_MAC
-# include "VBoxUtils-darwin.h"
-#endif
 
 /* Other VBox includes: */
 #include <iprt/assert.h>
 #include <iprt/getopt.h>
+
 
 /*********************************************************************************************************************************
 *   UIVisoSettingWidget definition.                                                                                          *
@@ -750,7 +748,7 @@ QString UIVisoCreatorWidget::visoFileFullPath() const
 *********************************************************************************************************************************/
 UIVisoCreatorDialog::UIVisoCreatorDialog(UIActionPool *pActionPool, QWidget *pParent,
                                          const QString& strVisoFilePath  /* = QString() */, const QString& strMachineName /* = QString() */)
-    : QIWithRestorableGeometry<QIMainDialog>(pParent)
+    : QIMainDialog(pParent)
     , m_pVisoCreatorWidget(0)
     , m_pButtonBox(0)
     , m_pActionPool(pActionPool)
@@ -886,7 +884,7 @@ bool UIVisoCreatorDialog::event(QEvent *pEvent)
             saveDialogGeometry();
         }
     }
-    return QIWithRestorableGeometry<QIMainDialog>::event(pEvent);
+    return QIMainDialog::event(pEvent);
 }
 
 void UIVisoCreatorDialog::sltSetCancelButtonShortCut(QKeySequence keySequence)
@@ -971,7 +969,7 @@ QUuid UIVisoCreatorDialog::createViso(UIActionPool *pActionPool, QWidget *pParen
         {
             QString strFilePath = pVisoCreator->visoFileFullPath();
             gEDataManager->setVISOCreatorRecentFolder(pVisoCreator->currentPath());
-            mediumId = UIMediumTools::openMedium(UIMediumDeviceType_DVD, strFilePath);
+            mediumId = UIMediumTools::openMedium(UIMediumDeviceType_DVD, strFilePath, pParent);
         }
     }
 
@@ -999,7 +997,7 @@ QUuid UIVisoCreatorDialog::editViso(UIActionPool *pActionPool, QWidget *pParent,
         {
             QString strFilePath = pVisoCreator->visoFileFullPath();
             gEDataManager->setVISOCreatorRecentFolder(pVisoCreator->currentPath());
-            mediumId = UIMediumTools::openMedium(UIMediumDeviceType_DVD, strFilePath);
+            mediumId = UIMediumTools::openMedium(UIMediumDeviceType_DVD, strFilePath, pParent);
         }
     }
 

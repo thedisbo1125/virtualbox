@@ -1,4 +1,4 @@
-/* $Id: UIShortcutConfigurationEditor.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIShortcutConfigurationEditor.cpp 113058 2026-02-17 10:55:13Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIShortcutConfigurationEditor class implementation.
  */
@@ -41,9 +41,11 @@
 #include "UIExtraDataManager.h"
 #include "UIHostComboEditor.h"
 #include "UIHotKeyEditor.h"
-#include "UIMessageCenter.h"
 #include "UIShortcutConfigurationEditor.h"
 #include "UIShortcutPool.h"
+
+/* Other VBox includes: */
+#include "iprt/assert.h"
 
 /* Namespaces: */
 using namespace UIExtraDataDefs;

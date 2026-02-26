@@ -1,4 +1,4 @@
-/* $Id: NEMInternal.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMInternal.h 113132 2026-02-23 18:18:04Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Internal header file.
  */
@@ -232,7 +232,11 @@ typedef struct NEM
 # else
     /** KVM_CAP_X86_ROBUST_SINGLESTEP. */
     bool                        fRobustSingleStep;
+    /** KVM_CAP_SPLIT_IRQCHIP */
+    bool                        fKvmApic;
 # endif
+    /** Size of the nested virt state, 0 if not supported. */
+    uint32_t                    cbNestedState;
 
     /** Hint where there might be a free slot. */
     uint16_t                    idPrevSlot;
@@ -458,6 +462,8 @@ typedef struct NEMCPU
     int32_t                     fdVCpu;
     /** Pointer to the KVM_RUN data exchange region. */
     R3PTRTYPE(struct kvm_run *) pRun;
+    /** The nested virt state as fetched from KVM. */
+    R3PTRTYPE(struct kvm_nested_state *) pNestedState;
 # ifdef VBOX_VMM_TARGET_ARMV8
     /** The IRQ device levels from device_irq_level. */
     uint64_t                    fIrqDeviceLvls;
@@ -468,6 +474,8 @@ typedef struct NEMCPU
 # elif defined(VBOX_VMM_TARGET_X86)
     /** The MSR_IA32_APICBASE value known to KVM. */
     uint64_t                    uKvmApicBase;
+    /** The number of variable MTRRs KVM supports, returned from MSR_IA32_MTRR_CAP. */
+    uint8_t                     cVarMtrrs;
 # endif
 
     /** @name Statistics
@@ -533,6 +541,9 @@ typedef struct NEMCPU
     bool                        fIrqWindowRegistered: 1;
     /** Flag whether it is possible inject a PIC interrupt. */
     bool                        fPicReadyForInterrupt: 1;
+    /** Whether debug breakpoints / events are armed or if single-stepping is active
+     *  (can be removed later when dedicated debug loop is implemented). */
+    bool                        fGuestDebug : 1;
     uint32_t                    uPadding;
     /** The VID_MSHAGN_F_XXX flags.
      * Either VID_MSHAGN_F_HANDLE_MESSAGE | VID_MSHAGN_F_GET_NEXT_MESSAGE or zero. */
@@ -853,6 +864,16 @@ DECLHIDDEN(bool)    nemR3NativeNotifyDebugEventChanged(PVM pVM, bool fUseDebugLo
  * @param   fUseDebugLoop   The current value determined by NEMR3NotifyDebugEventChangedPerCpu().
  */
 DECLHIDDEN(bool)    nemR3NativeNotifyDebugEventChangedPerCpu(PVM pVM, PVMCPU pVCpu, bool fUseDebugLoop);
+
+
+/**
+ * Called by NEMR3NeedSpecialWaitMethod() to let the native backend decide whether VMHALTMETHOD_NEM
+ * should be used for managing the EMT halt states.
+ *
+ * @returns true if  must be used, otherwise @c false.
+ * @param   pVM     The cross context VM structure.
+ */
+DECLHIDDEN(bool)    nemR3NativeNeedSpecialWaitMethod(PVM pVM);
 
 #endif /* IN_RING3 */
 

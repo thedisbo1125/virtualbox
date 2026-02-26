@@ -1,4 +1,4 @@
-/* $Id: UICloudMachineSettingsDialog.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UICloudMachineSettingsDialog.cpp 112853 2026-02-06 13:04:48Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UICloudMachineSettingsDialog class implementation.
  */
@@ -123,6 +123,11 @@ void UICloudMachineSettingsDialog::prepare()
 {
     /* Prepare local notification-center (parent to be assigned in the end): */
     m_pNotificationCenter = new UINotificationCenter(0);
+    if (m_pNotificationCenter)
+    {
+        QPointer<UINotificationCenter> target = m_pNotificationCenter;
+        setProperty("notification_center", QVariant::fromValue(target));
+    }
 
     /* Prepare layout: */
     QVBoxLayout *pLayout = new QVBoxLayout(this);
@@ -174,14 +179,14 @@ void UICloudMachineSettingsDialog::load()
     m_fClosable = false;
 
     /* Update name: */
-    if (!cloudMachineName(m_comCloudMachine, m_strName, notificationCenter()))
+    if (!cloudMachineName(m_comCloudMachine, m_strName, this))
         close();
 
     /* Retranslate title: */
     sltRetranslateUI();
 
     /* Update form: */
-    if (!cloudMachineSettingsForm(m_comCloudMachine, m_comForm, notificationCenter()))
+    if (!cloudMachineSettingsForm(m_comCloudMachine, m_comForm, this))
         close();
 
     /* Assign page with form: */
@@ -199,7 +204,7 @@ void UICloudMachineSettingsDialog::save()
 
     /* Apply form: */
     AssertReturnVoid(m_comForm.isNotNull());
-    if (!applyCloudMachineSettingsForm(m_comCloudMachine, m_comForm, notificationCenter()))
+    if (!applyCloudMachineSettingsForm(m_comCloudMachine, m_comForm, this))
         return;
 
     /* Just close for now: */

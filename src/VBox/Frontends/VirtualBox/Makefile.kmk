@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 113076 2026-02-18 16:44:32Z sergey.dubov@oracle.com $
 ## @file
 # Makefile for the VirtualBox Qt GUI.
 #
@@ -121,8 +121,6 @@ VirtualBox_DEFS.win       += VBOX_WITH_MASKED_SEAMLESS # VBOX_WITH_TRANSLUCENT_S
 ifdef VBOX_WITH_VMNET
  VirtualBox_DEFS.darwin += VBOX_WITH_VMNET
 endif
-# qt6: The UICocoaSpecialControls needs restructuring because QMacCocoaViewContainer is gone. Too lazy for now.
-# VirtualBox_DEFS.darwin   += VBOX_DARWIN_USE_NATIVE_CONTROLS
 VirtualBox_DEFS.win       += UNICODE QT_DLL
 # Sort alphabetically!
 VirtualBox_DEFS           += \
@@ -189,8 +187,6 @@ VirtualBoxVM_DEFS.win       += VBOX_WITH_MASKED_SEAMLESS # VBOX_WITH_TRANSLUCENT
 ifdef VBOX_WITH_VMNET
  VirtualBoxVM_DEFS.darwin   += VBOX_WITH_VMNET
 endif
-# qt6: The UICocoaSpecialControls needs restructuring because QMacCocoaViewContainer is gone. Too lazy for now.
-# VirtualBoxVM_DEFS.darwin   += VBOX_DARWIN_USE_NATIVE_CONTROLS
 VirtualBoxVM_DEFS.win       += UNICODE QT_DLL
 # Sort alphabetically!
 VirtualBoxVM_DEFS           += \
@@ -246,8 +242,6 @@ UICommon_DEFS.debug   = VBOX_CHECK_STATE # QT_FATAL_ASSERT
 ifdef VBOX_WITH_VMNET
  UICommon_DEFS.darwin += VBOX_WITH_VMNET
 endif
-# qt6: The UICocoaSpecialControls needs restructuring because QMacCocoaViewContainer is gone. Too lazy for now.
-# UICommon_DEFS.darwin += VBOX_DARWIN_USE_NATIVE_CONTROLS
 #UICommon_DEFS.win     += UNICODE QT_DLL
 # Sort alphabetically!
 UICommon_DEFS         += \
@@ -758,6 +752,7 @@ UICommon_QT_MOCHDRS = \
 	src/extensions/QILineEdit.h \
 	src/extensions/QIListWidget.h \
 	src/extensions/QIMainDialog.h \
+	src/extensions/QIMainWindow.h \
 	src/extensions/QIManagerDialog.h \
 	src/extensions/QIMenu.h \
 	src/extensions/QIMessageBox.h \
@@ -805,7 +800,6 @@ UICommon_QT_MOCHDRS = \
 	src/globals/UITranslationEventListener.h \
 	src/globals/UIVirtualBoxEventHandler.h \
 	src/globals/UIVirtualBoxClientEventHandler.h \
-	src/globals/VBoxUtils.h \
 	src/guestctrl/UIFileManager.h \
 	src/guestctrl/UIFileManagerGuestTable.h \
 	src/guestctrl/UIFileManagerHostTable.h \
@@ -834,11 +828,13 @@ UICommon_QT_MOCHDRS = \
 	src/medium/viso/UIVisoContentBrowser.h \
 	src/medium/viso/UIVisoCreator.h \
 	src/notificationcenter/UINotificationCenter.h \
+	src/notificationcenter/UINotificationMessage.h \
 	src/notificationcenter/UINotificationModel.h \
 	src/notificationcenter/UINotificationObject.h \
 	src/notificationcenter/UINotificationObjectItem.h \
 	src/notificationcenter/UINotificationObjects.h \
 	src/notificationcenter/UINotificationProgressTask.h \
+	src/notificationcenter/UINotificationQuestion.h \
 	src/objects/UIExecutionQueue.h \
 	src/settings/UIAdvancedSettingsDialog.h \
 	src/settings/UIAdvancedSettingsDialogSpecific.h \
@@ -956,6 +952,11 @@ UICommon_QT_MOCHDRS = \
 	src/wizards/newvd/UIWizardNewVDSizeLocationPage.h \
 	src/wizards/newvd/UIWizardNewVDExpertPage.h
 
+if "$(KBUILD_TYPE)" != "release" || defined(VBOX_GUI_WITH_EXTRADATA_MANAGER_UI)
+ UICommon_QT_MOCHDRS += \
+ 	src/extradata/UIExtraDataManagerWindow.h
+endif
+
 ifdef VBOX_GUI_WITH_NETWORK_MANAGER
  UICommon_QT_MOCHDRS += \
  	src/networking/UIDownloader.h \
@@ -974,7 +975,6 @@ ifdef VBOX_GUI_WITH_NETWORK_MANAGER
 endif
 
 UICommon_QT_MOCHDRS.darwin += \
-	src/platform/darwin/UICocoaSpecialControls.h \
 	src/platform/darwin/UIWindowMenuManager.h
 
 
@@ -1212,8 +1212,7 @@ VirtualBox_SOURCES = \
 	src/wizards/importappliance/UIWizardImportAppPageSource.cpp
 
 VirtualBox_SOURCES.darwin += \
-	src/platform/darwin/UIDesktopServices_darwin.cpp \
-	src/platform/darwin/UIDesktopServices_darwin_cocoa.mm
+	src/platform/darwin/UIDesktopServices_darwin.cpp
 
 if1of ($(KBUILD_TARGET), freebsd linux netbsd openbsd solaris) # U*nix
  VirtualBox_SOURCES += \
@@ -1289,8 +1288,8 @@ ifdef VBOX_WITH_DRAG_AND_DROP
 endif
 
 VirtualBoxVM_SOURCES.darwin += \
-	src/platform/darwin/UIAbstractDockIconPreview.cpp \
-	src/platform/darwin/UICocoaDockIconPreview.mm
+	src/platform/darwin/UIDockIconPreview.cpp \
+	src/platform/darwin/UIDockIconPreview-cocoa.mm
 
 if1of ($(KBUILD_TARGET), freebsd linux netbsd openbsd solaris) # U*nix
  VirtualBoxVM_SOURCES += \
@@ -1328,6 +1327,7 @@ UICommon_SOURCES = \
 	src/extensions/QILineEdit.cpp \
 	src/extensions/QIListWidget.cpp \
 	src/extensions/QIMainDialog.cpp \
+	src/extensions/QIMainWindow.cpp \
 	src/extensions/QIManagerDialog.cpp \
 	src/extensions/QIMenu.cpp \
 	src/extensions/QIMessageBox.cpp \
@@ -1424,11 +1424,13 @@ UICommon_SOURCES = \
 	src/medium/viso/UIVisoContentBrowser.cpp \
 	src/medium/viso/UIVisoCreator.cpp \
 	src/notificationcenter/UINotificationCenter.cpp \
+	src/notificationcenter/UINotificationMessage.cpp \
 	src/notificationcenter/UINotificationModel.cpp \
 	src/notificationcenter/UINotificationObject.cpp \
 	src/notificationcenter/UINotificationObjectItem.cpp \
 	src/notificationcenter/UINotificationObjects.cpp \
 	src/notificationcenter/UINotificationProgressTask.cpp \
+	src/notificationcenter/UINotificationQuestion.cpp \
 	src/objects/UIExecutionQueue.cpp \
 	src/objects/UIRichTextString.cpp \
 	src/settings/UISettingsDefs.cpp \
@@ -1549,6 +1551,11 @@ UICommon_SOURCES = \
 	src/wizards/newvd/UIWizardNewVDSizeLocationPage.cpp \
 	src/wizards/newvd/UIWizardNewVDExpertPage.cpp
 
+if "$(KBUILD_TYPE)" != "release" || defined(VBOX_GUI_WITH_EXTRADATA_MANAGER_UI)
+ UICommon_SOURCES += \
+ 	src/extradata/UIExtraDataManagerWindow.cpp
+endif
+
 ifdef VBOX_GUI_WITH_NETWORK_MANAGER
  UICommon_SOURCES += \
  	src/networking/UIDownloader.cpp \
@@ -1581,7 +1588,6 @@ UICommon_SOURCES.darwin += \
 	src/platform/darwin/CocoaEventHelper.mm \
 	src/platform/darwin/DarwinKeyboard.cpp \
 	src/platform/darwin/UICocoaApplication.mm \
-	src/platform/darwin/UICocoaSpecialControls.mm \
 	src/platform/darwin/UIWindowMenuManager.cpp \
 	src/platform/darwin/VBoxUtils-darwin-cocoa.mm \
 	src/platform/darwin/VBoxUtils-darwin.cpp

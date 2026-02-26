@@ -1,4 +1,4 @@
-/* $Id: UICommon.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UICommon.h 112957 2026-02-11 15:18:35Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UICommon class declaration.
  */
@@ -245,6 +245,11 @@ public:
         /** Returns a file name (unique up to extension) wrt. @a strFullFolderPath folder content. Starts
           * searching strBaseFileName and adds suffixes until a unique file name is found. */
         static QString findUniqueFileName(const QString &strFullFolderPath, const QString &strBaseFileName);
+
+#ifdef RT_OS_LINUX
+        /** Verifies that USB drivers are properly configured on Linux. */
+        static void checkForWrongUSBMounted();
+#endif
     /** @} */
 
     /** @name Widget stuff.
@@ -345,14 +350,6 @@ private:
           * @param  piDbgCfgVar       Brings the debugger config variable to consult.
           * @param  pszExtraDataName  Brings the extra data name relating to this variable. */
         bool isDebuggerWorker(int *piDbgCfgVar, const char *pszExtraDataName) const;
-#endif
-    /** @} */
-
-    /** @name USB stuff.
-     * @{ */
-#ifdef RT_OS_LINUX
-        /** Verifies that USB drivers are properly configured on Linux. */
-        static void checkForWrongUSBMounted();
 #endif
     /** @} */
 

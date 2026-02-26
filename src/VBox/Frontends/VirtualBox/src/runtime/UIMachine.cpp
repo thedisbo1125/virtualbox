@@ -1,4 +1,4 @@
-/* $Id: UIMachine.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachine.cpp 112785 2026-02-02 16:38:44Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachine class implementation.
  */
@@ -52,7 +52,6 @@
 #include "UISession.h"
 #ifdef VBOX_WS_MAC
 # include "UICocoaApplication.h"
-# include "VBoxUtils-darwin.h"
 #endif
 
 /* COM includes: */
@@ -1543,6 +1542,8 @@ bool UIMachine::prepareSession()
     AssertPtrReturn(uisession(), false);
 
     /* Console events stuff: */
+    connect(uisession(), &UISession::sigGuestPropertyChange,
+            this, &UIMachine::sigGuestPropertyChange);
     connect(uisession(), &UISession::sigAudioAdapterChange,
             this, &UIMachine::sltHandleAudioAdapterChange);
     connect(uisession(), &UISession::sigAdditionsStateChange,

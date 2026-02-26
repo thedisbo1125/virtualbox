@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA-SVGA.h 112694 2026-01-26 12:00:56Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device
  */
@@ -184,6 +184,21 @@ struct {
  * The code assumes it's at least an order of magnitude less than UINT32_MAX. */
 #define VMSVGA_MAX_Y                    _1M
 
+/** Maximum cursor dimensions (X/Y) in pixels.
+ * @note This is a VBox limit that we've set ourselves. Do not know what the
+ *       original device implementation reports.  The main objective is (/was)
+ *       to prevent interger overflows when multiplying the dimensions and to
+ *       check the input data sizes.  Since 7.2.8, this is an inclusive limit,
+ *       prior to that it was exclusive.
+ * @todo Check what the other guys return for SVGA_REG_CURSOR_MAX_DIMENSION. */
+#define VMSVGA_CURSOR_MAX_DIMENSION     2048
+/** Maximum cursor byte size.
+ * @note We have to ASSUME color cursors here with 32-bit AND and XOR masks.
+ *       This means twice the size of an alpha cursor.
+ * @todo Check what the other guys returns for SVGA_REG_CURSOR_MAX_BYTE_SIZE.
+ * @todo Does this include the header? */
+#define VMSVGA_CURSOR_MAX_BYTES         (VMSVGA_CURSOR_MAX_DIMENSION * VMSVGA_CURSOR_MAX_DIMENSION * sizeof(uint32_t) * 2)
+
 /* u32ActionFlags */
 #define VMSVGA_ACTION_CHANGEMODE_BIT    0
 #define VMSVGA_ACTION_CHANGEMODE        RT_BIT(VMSVGA_ACTION_CHANGEMODE_BIT)
@@ -261,11 +276,15 @@ typedef struct VMSVGAVIEWPORT
 #ifdef VBOX_WITH_VMSVGA3D
 /// @todo Development define. Remove.
 # define DX_NEW_HWSCREEN
-# ifdef DX_NEW_HWSCREEN
-#  define VMSVGA_VRAM_OFFSET_SCREEN_TARGET UINT32_C(0xFFFFFFFF)
-# endif
 typedef struct VMSVGAHWSCREEN *PVMSVGAHWSCREEN;
 #endif
+
+#define VMSVGA_VRAM_OFFSET_SCREEN_TARGET UINT32_C(0xFFFFFFFF)
+
+/* Allocates VMSVGASCREENOBJECT::pvScreenBitmap with maximum possible size
+ * (pThis->svga.u32MaxWidth x pThis->svga.u32MaxHeight)
+ * in order to avoid reallocation of the memory on video mode change. */
+#define PERMANENT_SCREEN_BITMAP
 
 /**
  * Screen object state.
@@ -472,6 +491,7 @@ typedef struct VMSVGAState
     STAMCOUNTER                 StatRegDevCapWr;
     STAMCOUNTER                 StatRegCmdPrependLowWr;
     STAMCOUNTER                 StatRegCmdPrependHighWr;
+    STAMCOUNTER                 StatRegCursorMobIdWr;
 
     STAMCOUNTER                 StatRegBitsPerPixelRd;
     STAMCOUNTER                 StatRegBlueMaskRd;

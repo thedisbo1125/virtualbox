@@ -1,4 +1,4 @@
-/* $Id: UINotificationObject.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UINotificationObject.cpp 113071 2026-02-18 15:51:58Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UINotificationObject class implementation.
  */
@@ -71,40 +71,6 @@ UINotificationSimple::UINotificationSimple(const QString &strName,
 {
 }
 
-bool UINotificationSimple::isCritical() const
-{
-    return m_fCritical;
-}
-
-bool UINotificationSimple::isDone() const
-{
-    return true;
-}
-
-QString UINotificationSimple::name() const
-{
-    return m_strName;
-}
-
-QString UINotificationSimple::details() const
-{
-    return m_strDetails;
-}
-
-QString UINotificationSimple::internalName() const
-{
-    return m_strInternalName;
-}
-
-QString UINotificationSimple::helpKeyword() const
-{
-    return m_strHelpKeyword;
-}
-
-void UINotificationSimple::handle()
-{
-}
-
 /* static */
 bool UINotificationSimple::isSuppressed(const QString &strInternalName)
 {
@@ -149,26 +115,6 @@ bool UINotificationProgress::isCancelable() const
 QString UINotificationProgress::error() const
 {
     return m_pTask ? m_pTask->errorMessage() : QString();
-}
-
-bool UINotificationProgress::isCritical() const
-{
-    return true;
-}
-
-bool UINotificationProgress::isDone() const
-{
-    return m_fDone;
-}
-
-QString UINotificationProgress::internalName() const
-{
-    return QString();
-}
-
-QString UINotificationProgress::helpKeyword() const
-{
-    return QString();
 }
 
 void UINotificationProgress::handle()
@@ -250,26 +196,6 @@ ulong UINotificationDownloader::percent() const
 QString UINotificationDownloader::error() const
 {
     return m_strError;
-}
-
-bool UINotificationDownloader::isCritical() const
-{
-    return true;
-}
-
-bool UINotificationDownloader::isDone() const
-{
-    return m_fDone;
-}
-
-QString UINotificationDownloader::internalName() const
-{
-    return QString();
-}
-
-QString UINotificationDownloader::helpKeyword() const
-{
-    return QString();
 }
 
 void UINotificationDownloader::handle()
